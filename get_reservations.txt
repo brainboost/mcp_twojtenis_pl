@@ -1,0 +1,22 @@
+curl 'https://www.twojtenis.pl/pl/dashboard/reservations.html' \
+  --compressed \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0' \
+  -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+  -H 'Accept-Language: en,pl;q=0.7,ru;q=0.3' \
+  -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+  -H 'Connection: keep-alive' \
+  -H 'Referer: https://www.twojtenis.pl/pl/dashboard/account.html' \
+  -H 'Cookie: PHPSESSID=3a05b284ee898f248331d91b2cdb84a7; CooAcc=1' \
+  -H 'Upgrade-Insecure-Requests: 1' \
+  -H 'Sec-Fetch-Dest: document' \
+  -H 'Sec-Fetch-Mode: navigate' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'Sec-Fetch-User: ?1' \
+  -H 'Sec-GPC: 1' \
+  -H 'Priority: u=0, i' \
+  -H 'Pragma: no-cache' \
+  -H 'Cache-Control: no-cache' \
+  -H 'TE: trailers'
+  
+  
+  reservation_id is in the class="rsv_box" in the url like this,  https://www.twojtenis.pl/pl/rsv/show/68ffe4f7a17d6.html,  68ffe4f7a17d6 is the ID

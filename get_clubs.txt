@@ -1,0 +1,8 @@
+blonia_sport,  Błonia Sport, al. 3 Maja 57, +48728871400  
+ks_nadwislan_krakow, KS Nadwiślan Kraków, ul. Koletek 20, +48507361282 
+krakowska_szkola_tenisa_tenis24, Krakowska Szkoła Tenisa TENIS24, Ptaszyckiego 4, +48126431220
+forehand_krakowska_szkola_tenisa,  Forehand Krakowska Akademia Tenisa, Strzelców 15A, +48796760567 
+katenis__korty_olsza,  KATenis - korty Olsza, Michała Siedleckiego 7, +48796760567
+korty_dabskie,  Korty Dąbskie, Dąbska 1, +48500210614 
+wks_wawel,  WKS Wawel, ul. Podchorążych 3, +48533343323
+klub_tenisowy_blonia_krakow, Klub Tenisowy Błonia Kraków, ul. Na Błoniach 1, +48500210614 

@@ -1,0 +1,18 @@
+curl --request POST \
+  --url 'https://www.twojtenis.pl/ajax.php?load=keep_logged' \
+  --header 'Accept: */*' \
+  --header 'Accept-Encoding: gzip, deflate, br, zstd' \
+  --header 'Accept-Language: en,pl;q=0.7,ru;q=0.3' \
+  --header 'Cache-Control: no-cache' \
+  --header 'Connection: keep-alive' \
+  --header 'Content-Length: 0' \
+  --header 'Cookie: PHPSESSID=b00cd94d0ee73746730eb8c96e1228c8; CooAcc=1' \
+  --header 'Origin: https://www.twojtenis.pl' \
+  --header 'Pragma: no-cache' \
+  --header 'Referer: https://www.twojtenis.pl/pl/home.html' \
+  --header 'Sec-Fetch-Dest: empty' \
+  --header 'Sec-Fetch-Mode: cors' \
+  --header 'Sec-Fetch-Site: same-origin' \
+  --header 'Sec-GPC: 1' \
+  --header 'TE: trailers' \
+  --header 'X-Requested-With: XMLHttpRequest'

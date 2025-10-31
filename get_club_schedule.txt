@@ -1,0 +1,24 @@
+curl --request POST \
+  --url 'https://www.twojtenis.pl/ajax.php?load=courts_list' \
+  --header 'Accept: */*' \
+  --header 'Accept-Encoding: gzip, deflate, br, zstd' \
+  --header 'Accept-Language: en,pl;q=0.7,ru;q=0.3' \
+  --header 'Cache-Control: no-cache' \
+  --header 'Connection: keep-alive' \
+  --header 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  --header 'Cookie: PHPSESSID=9673b728c94261527caad30cc2a5e463; CooAcc=1' \
+  --header 'Origin: https://www.twojtenis.pl' \
+  --header 'Pragma: no-cache' \
+  --header 'Referer: https://www.twojtenis.pl/pl/kluby/blonia_sport.html' \
+  --header 'Sec-Fetch-Dest: empty' \
+  --header 'Sec-Fetch-Mode: cors' \
+  --header 'Sec-Fetch-Site: same-origin' \
+  --header 'Sec-GPC: 1' \
+  --header 'TE: trailers' \
+  --header 'X-Requested-With: XMLHttpRequest' \
+  --data date=24.09.2025 \
+  --data club_url=blonia_sport \
+  --data page=NaN \
+  --data spr=84 \
+  --data zsh=0 \
+  --data tz=0
