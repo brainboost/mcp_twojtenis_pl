@@ -80,19 +80,9 @@ class Config:
         return password
 
     @property
-    def session_file_path(self) -> str:
-        """Get path to session storage file."""
-        return self.get("TWOJTENIS_SESSION_FILE", "config/session.json")
-
-    @property
     def base_url(self) -> str:
         """Get base URL for twojtenis.pl."""
         return self.get("TWOJTENIS_BASE_URL", "https://www.twojtenis.pl")
-
-    @property
-    def session_refresh_interval(self) -> int:
-        """Get session refresh interval in seconds."""
-        return int(self.get("TWOJTENIS_SESSION_REFRESH", "60"))
 
     @property
     def session_lifetime(self) -> int:
@@ -118,9 +108,7 @@ class Config:
         """Convert configuration to dictionary."""
         return {
             "email": self.email,
-            "session_file_path": self.session_file_path,
             "base_url": self.base_url,
-            "session_refresh_interval": self.session_refresh_interval,
             "session_lifetime": self.session_lifetime,
             "request_timeout": self.request_timeout,
             "retry_attempts": self.retry_attempts,

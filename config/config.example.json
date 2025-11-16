@@ -1,9 +1,7 @@
 {
   "TWOJTENIS_EMAIL": "your_email@example.com",
   "TWOJTENIS_PASSWORD": "your_password",
-  "TWOJTENIS_SESSION_FILE": "config/session.json",
   "TWOJTENIS_BASE_URL": "https://www.twojtenis.pl",
-  "TWOJTENIS_SESSION_REFRESH": 60,
   "TWOJTENIS_SESSION_LIFETIME": 120,
   "TWOJTENIS_REQUEST_TIMEOUT": 30,
   "TWOJTENIS_RETRY_ATTEMPTS": 3,

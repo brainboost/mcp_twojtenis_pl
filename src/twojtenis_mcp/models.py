@@ -1,37 +1,26 @@
 """Data models for TwojTenis MCP server."""
 
 from datetime import datetime
-from enum import IntEnum
-from typing import (
-    Any,
-)
 
 from pydantic import BaseModel, Field
 
 
-class SportId(IntEnum):
-    """Enumeration of supported sport IDs."""
+class SportId(BaseModel):
+    """Represents a kind of sport."""
 
-    TENNIS_SQUASH = 12
-    BADMINTON = 84
-    TENNIS = 70
-
-    def __str__(self) -> str:
-        return self.name.lower()
-
-    def model_dump(
-        self,
-    ) -> dict[str, Any]:
-        return {i.name: i.value for i in SportId}
+    id: int = Field(..., description="Unique Identifier")
+    name: str = Field(..., description="Sport name")
 
 
 class Club(BaseModel):
-    """Represents a tennis/badminton club."""
+    """Represents a sporting club."""
 
     id: str = Field(..., description="Unique club identifier")
+    num: int = Field(..., description="Numeric club identifier")
     name: str = Field(..., description="Club name")
     address: str = Field(..., description="Club address")
     phone: str = Field(..., description="Club phone number")
+    sports: list[SportId] | None = Field(None, description="List of supported sports")
 
 
 class Court(BaseModel):
@@ -47,7 +36,7 @@ class Schedule(BaseModel):
     """Represents court availability schedule for a club."""
 
     club_id: str = Field(..., description="Club identifier")
-    sport_id: SportId = Field(..., description="Sport identifier")
+    sport_id: int = Field(..., description="Sport identifier")
     date: str = Field(..., description="Date in DD.MM.YYYY format")
     courts: list[Court] = Field(..., description="List of courts with availability")
 
@@ -55,23 +44,20 @@ class Schedule(BaseModel):
 class Reservation(BaseModel):
     """Represents a court reservation."""
 
-    user_id: str = Field(..., description="User identifier (PHPSESSID)")
+    booking_id: str = Field(..., description="Reservation identifier")
+    user_id: str = Field(..., description="User identifier")
     club_id: str = Field(..., description="Club identifier")
     court_number: str = Field(..., description="Court number")
     date: str = Field(..., description="Date in DD.MM.YYYY format")
     hour: str = Field(..., description="Hour in HH:MM format")
-    sport_id: SportId | None = Field(SportId.BADMINTON, description="Sport identifier")
+    sport_id: int = Field(..., description="Sport identifier")
 
 
 class UserSession(BaseModel):
     """Represents user session information."""
 
     phpsessid: str = Field(..., description="PHP session ID")
-    expires_at: datetime | None = Field(
-        None, description="Session expiration time (not used in new approach)"
-    )
-    is_active: bool = Field(True, description="Whether session is currently active")
-    email: str | None = Field(None, description="User email")
+    expires_at: datetime = Field(..., description="Session expiration datetime")
 
 
 class ApiError(BaseModel):
@@ -101,7 +87,7 @@ class ReservationRequest(BaseModel):
     court_number: str = Field(..., description="Court number")
     date: str = Field(..., description="Date in DD.MM.YYYY format")
     hour: str = Field(..., description="Hour in HH:MM format")
-    sport_id: SportId = Field(..., description="Sport identifier")
+    sport_id: int = Field(..., description="Sport identifier")
 
 
 class DeleteReservationRequest(BaseModel):

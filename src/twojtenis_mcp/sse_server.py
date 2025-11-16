@@ -276,7 +276,7 @@ def run_sse_server(host: str = "0.0.0.0", port: int = 8000):
     sse_manager.run(host, port)
 
 
-async def run_sse_server_async(host: str = "0.0.0.0", port: int = 8000):
+async def run_sse_server_async(host: str = "0.0.0.0", port: int = 8000) -> asyncio.Task:
     """Run the SSE server in non-blocking mode.
 
     Args:

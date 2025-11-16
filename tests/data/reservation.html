@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pl" lang="pl">
+
+<head>
+  <title>Twój Tenis &#183; szczegóły rezerwacji &#183; System rezerwacji kortów</title>
+  <meta name="viewport" content="width=1600, initial-scale=1, maximum-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <meta name="Robots" content="index,follow,all" />
+  <meta name="Author" content="Marcin Cichy" />
+  <meta http-equiv="Content-Language" content="pl" />
+  <base href="https://www.twojtenis.pl" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#999999">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <link type="text/css" rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.structure.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.theme.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/global.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/fonts.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/full_page.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/rwd.css" />
+  <link type="text/css" rel="stylesheet" href="/css/jquery/jquery.datetimepicker.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/bootstrap/bootstrap-select.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/rsv.css" />
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4AbGAA6iNIaPOpbGTleW9qxYPXvyYov4&amp;hl=pl"
+    type="text/javascript"></script>
+  <style type="text/css">
+    .clubcolor-I,
+    body {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    .clubcolor-II {
+      background-color: #458a4b !important;
+      color: #ffffff !important;
+    }
+
+    .clubcolor-III {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    a {
+      color: #000000;
+    }
+
+    .clubcolor-I a {
+      color: #000000;
+    }
+
+    .clubcolor-II a {
+      color: #ffffff;
+    }
+
+    .clubcolor-III a {
+      color: #000000;
+    }
+  </style>
+
+</head>
+
+<body>
+  <header id="site_header" class="clubcolor-II">
+    <div class="container">
+      <div id="header_logo">
+        <a href="/pl/"><img src="/gfx/logo.png" alt="" /></a>
+      </div>
+      <div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent">
+        <div class="btnbox"><a href="/pl/ulubione_kluby.html"
+            class="button_big button_big-black smlownhead clubcolor-II">ulubione kluby</a> <a
+            href="/pl/dashboard/reservations.html" class="button_big button_big-black smlownhead clubcolor-II">Lista
+            rezerwacji</a> <a href="/pl/dashboard/payments.html"
+            class="button_big button_big-black smlownhead clubcolor-II">Płatności</a></div>
+      </div>
+      <div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent">
+        <div class="btnbox al_right">
+
+          <a href="/pl/dashboard/account.html" class="button_big button_big-black clubcolor-II">Twój Profil</a>
+          <a href="/pl/logout.html" class="button_big button_big-white clubcolor-I logoutbtn">wyloguj się <span
+              id="ses_counter" class="clubcolor-I">60:00</span></a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="site_header_place"></div>
+  <div id="site_content">
+    <div class="container">
+
+      <p>&nbsp;</p>
+      <div id="site_breadcrumbs" class="al_clear">
+        <ul class="breadcrumb clubcolor-II">
+          <li><a href="/"><span class="glyphicon glyphicon-home"></span> strona główna</a></li>
+          <li><a href="/pl/kluby.html">kluby</a></li>
+          <li><a href="/pl/kluby/blonia_sport.html">Błonia Sport</a></li>
+          <li class="active"><a href="#">szczegóły rezerwacji</a></li>
+        </ul>
+      </div>
+      <div id="site_alerts" class="al_clear"></div>
+
+
+      <div class="well well-rsv well-full">
+        <div class="col-xs-12">
+          <h1>klub</h1>
+        </div>
+        <table class="table table-bordered">
+          <tbody>
+            <tr>
+              <td class="clubcolor-III" rowspan="2" style="width:100px"><img src="/www/clubs/emblems/90.png"
+                  class="club_emblem" /></td>
+              <td class="clubcolor-II">nazwa klubu</td>
+              <td class="clubcolor-II">adres</td>
+            </tr>
+            <tr>
+              <td class="clubcolor-III">Błonia Sport</td>
+              <td class="clubcolor-III">
+                al. 3 Maja 57
+                <br />30-062 KRAKÓW
+                <br />województwo małopolskie
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="al_clear"></p>
+      <div class="well well-rsv">
+        <h3><img src="/gfx/icons/rsv_info.png" alt="" /> szczczegóły rezerwacji</h3>
+        <table class="table table-hover table-bordered table-rsv">
+          <thead>
+            <tr>
+              <th class="clubcolor-II" style="width:10%">data</th>
+              <th class="clubcolor-II" style="width:10%">godziny</th>
+              <th class="clubcolor-II" style="width:65%">kort</th>
+              <th class="clubcolor-II" style="width:15%">odwołaj do</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>23.11.2024</td>
+              <td>15:00 - 16:00</td>
+              <td><span class="label label-success">Badminton</span> <span class="label label-info">kort Badminton
+                  4</span> <span class="label label-default">Hala</span> <span class="label label-default">Mata
+                  turniejowa</span> <img src="/gfx/icons/light.png" class="lighticon" alt="" title="oświetlony" /></td>
+              <td>22.11.2024 15:00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="">
+          <h3><img src="/gfx/icons/pricing.png" alt="" /> szczegóły płatności <span id="pay_status_ajax_loader"
+              style="display:none"><img src="/gfx/ajax/loader-2.gif" alt="" /></span></h3>
+          <div class="">
+            <table class="table table-hover table-bordered table-rsv">
+              <thead>
+                <tr>
+                  <th class="clubcolor-II" style="width:30%">status płatności</th>
+                  <th class="clubcolor-II" style="width:20%">wpłacona część</th>
+                  <th class="clubcolor-II" style="width:10%">rabat</th>
+                  <th class="clubcolor-II" style="width:20%">termin płatności</th>
+                  <th class="clubcolor-II" style="width:20%">kwota</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>zapłacone</td>
+                  <td>0.00 PLN</td>
+                  <td><span class="glyphicon glyphicon-minus"></span></td>
+                  <td>30.11.2024 16:00</td>
+                  <td>80.00 PLN</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="al_clear"></div>
+      </div>
+      <p class="al_clear"></p>
+      <p class="al_clear">&nbsp;</p>
+      <p class="al_clear">&nbsp;</p>
+    </div>
+    <script type="text/javascript">
+      var trans_rsv = new Object();
+      trans_rsv.del_title = 'Anuluj rezerwację';
+      var load_lang = "pl";
+      var rsv_id = 3632750;
+      var rsv_uid = "673a08b3628c2";
+      var active_accordion = 0;
+      var rsv_graph_type = "half";
+      var club_id = "90";
+      var back_url = "/pl/kluby/blonia_sport/courts_list/23.11.2024.html";
+    </script>
+  </div>
+  </div>
+  <footer id="site_footer" class="al_clear clubcolor-II">
+    <div class="lower_foot">
+      <div class="container">
+        <p class="al_clear">&nbsp;</p>
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="footer_menu">
+          <div class="flagbox al_left"><a href="/pl/"><img src="/www/langs/1.png" class="headflag active" /></a><a
+              href="/en/"><img src="/www/langs/2.png" class="headflag disactive" /></a></div>
+          <p class="al_clear">&nbsp;</p>
+          <ul>
+            <li><a href="/pl/o_nas.html">o nas</a></li>
+            <li><a href="/pl/regulamin.html">regulamin</a></li>
+            <li><a href="/pl/polityka_cookies.html">Polityka cookies</a></li>
+            <li><a href="/pl/kontakt.html">kontakt</a></li>
+          </ul>
+          <br class="al_clear" />&copy Twój Tenis 2.0.9.4. Wszelkie prawa zastrzeżone.<br />Build 2024-04-21 23:16
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 text-right 3wbox">
+          <div class="iconbox al_right">
+            <p><a href="https://www.facebook.com/Tw%C3%B3j-Tenis-wwwtwojtenispl-168322893231874/"><img
+                  src="/gfx/social/fb.png" /></a> <a href="https://www.instagram.com/twojtenis/"><img
+                  src="/gfx/social/inst.png" /></a></p>
+            <p><a href="https://www.kamiennakajaki.pl/" class="button_big button_big-black clubcolor-II">Kamienna
+                Kajaki</a></p>
+          </div>
+          <p class="al_clear">&nbsp;</p>
+          <a href="http://www.3wymiar.pl" target="_blank">framework 3wymiar <img src="/gfx/3wymiar.png" /></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <script type="text/javascript" src="/js/jquery/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="/js/ui/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/js/html5/html5.js"></script>
+  <script type="text/javascript" src="/js/global.js"></script>
+  <script type="text/javascript" src="/js/template/full_page.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/bootstrap-select.min.js"></script>
+  <script type="text/javascript" src="/js/jquery/jquery.datetimepicker.full.min.js"></script>
+  <script type="text/javascript" src="/js/form_old.js"></script>
+  <script type="text/javascript" src="/js/template/notes.js"></script>
+  <script type="text/javascript" src="/js/template/rsv_edit.js"></script>
+
+
+  <script type="text/javascript">
+    var geocoder, map;
+
+    function codeAddress(address) {
+      geocoder = new google.maps.Geocoder();
+      geocoder.geocode({
+        'address': address
+      }, function (results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+          var mapOptions = {
+            zoom: 14,
+            center: results[0].geometry.location,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          }
+          map = new google.maps.Map(document.getElementById("map_69199d53613b9"), mapOptions);
+          var image = {
+            url: "/www/clubs/emblems/90.png",
+            scaledSize: new google.maps.Size(36, 36),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(0, 0)
+          };
+
+
+          var marker = new google.maps.Marker({
+            position: results[0].geometry.location,
+            map: map,
+            size: new google.maps.Size(36, 36),
+            icon: image
+          });
+        }
+      });
+    }
+    codeAddress('"al. 3 Maja 57, KRAKÓW"')
+  </script>
+  <script type="text/javascript">$(document).ready(function () { startTimer(3600, $("#ses_counter")); });</script>
+</body>
+
+</html>

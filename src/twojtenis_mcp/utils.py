@@ -3,9 +3,12 @@
 import logging
 import re
 from datetime import datetime
-from typing import Any
 
 logger = logging.getLogger(__name__)
+
+url_regex = re.compile(r"/([^/]+)\.\w+$")
+date_regex = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
+time_regex = re.compile(r"^\d{2}:\d{2}$")
 
 
 def validate_date(date_str: str) -> bool:
@@ -18,7 +21,7 @@ def validate_date(date_str: str) -> bool:
         True if valid, False otherwise
     """
     try:
-        if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", date_str):
+        if not re.match(date_regex, date_str):
             return False
 
         day, month, year = map(int, date_str.split("."))
@@ -49,7 +52,7 @@ def validate_time(time_str: str) -> bool:
         True if valid, False otherwise
     """
     try:
-        if not re.match(r"^\d{2}:\d{2}$", time_str):
+        if not re.match(time_regex, time_str):
             return False
 
         hour, minute = map(int, time_str.split(":"))
@@ -122,124 +125,6 @@ def format_time_for_display(time_str: str) -> str:
         return time_str
 
 
-def get_sport_name_by_id(sport_id: int) -> str:
-    """Get sport name by sport ID.
-
-    Args:
-        sport_id: Sport identifier
-
-    Returns:
-        Sport name
-    """
-    sport_names = {
-        84: "badminton",
-        70: "tennis",
-    }
-    return sport_names.get(sport_id, f"sport_{sport_id}")
-
-
-def sanitize_club_id(club_id: str) -> str:
-    """Sanitize club ID for safe usage.
-
-    Args:
-        club_id: Raw club ID
-
-    Returns:
-        Sanitized club ID
-    """
-    # Remove any characters that aren't alphanumeric, underscore, or hyphen
-    return re.sub(r"[^a-zA-Z0-9_-]", "", club_id)
-
-
-def create_error_response(
-    message: str, details: dict[str, Any] | None = None
-) -> dict[str, Any]:
-    """Create a standardized error response.
-
-    Args:
-        message: Error message
-        details: Optional error details
-
-    Returns:
-        Error response dictionary
-    """
-    response = {
-        "success": False,
-        "message": message,
-        "timestamp": datetime.now().isoformat(),
-    }
-
-    if details:
-        response["details"] = details
-
-    return response
-
-
-def create_success_response(
-    message: str, data: dict[str, Any] | None = None
-) -> dict[str, Any]:
-    """Create a standardized success response.
-
-    Args:
-        message: Success message
-        data: Optional response data
-
-    Returns:
-        Success response dictionary
-    """
-    response = {
-        "success": True,
-        "message": message,
-        "timestamp": datetime.now().isoformat(),
-    }
-
-    if data:
-        response["data"] = data
-
-    return response
-
-
-def extract_session_id_from_cookie(cookie_header: str) -> str | None:
-    """Extract PHPSESSID from Set-Cookie header.
-
-    Args:
-        cookie_header: Set-Cookie header value
-
-    Returns:
-        PHPSESSID if found, None otherwise
-    """
-    try:
-        match = re.search(r"PHPSESSID=([^;]+)", cookie_header)
-        if match:
-            return match.group(1)
-        return None
-    except (AttributeError, TypeError):
-        return None
-
-
-def is_session_expired(expires_at: datetime) -> bool:
-    """Check if session has expired.
-
-    Args:
-        expires_at: Session expiration time
-
-    Returns:
-        True if expired, False otherwise
-    """
-    return datetime.now() >= expires_at
-
-
-def get_session_refresh_interval() -> int:
-    """Get session refresh interval from configuration.
-
-    Returns:
-        Session refresh interval in seconds
-    """
-    from .config import config
-
-    return config.session_refresh_interval
-
-
 def retry_on_failure(max_attempts: int = 3, delay: float = 1.0):
     """Decorator for retrying functions on failure.
 
@@ -271,3 +156,9 @@ def retry_on_failure(max_attempts: int = 3, delay: float = 1.0):
         return wrapper
 
     return decorator
+
+
+def extract_id_from_url(url: str) -> str:
+    """Parse URL to extract ID from the file name (without extension)"""
+    id = re.search(url_regex, url).group(1)  # type: ignore
+    return str(id)

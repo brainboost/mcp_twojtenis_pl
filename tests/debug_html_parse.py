@@ -1,13 +1,10 @@
-import json
-
 from src.twojtenis_mcp.schedule_parser import ScheduleParser
 
 # Load test input
-with open("tests/data/test_input_1.json", encoding="utf-8") as f:
-    test_input = json.load(f)
+with open("tests/data/blonia_sport.html", encoding="utf-8") as f:
+    data = f.read()
 
-# Parse schedules
-result = ScheduleParser.parse_schedules(json_str=json.dumps(test_input))
+result = ScheduleParser.parse_schedules(html=data)
 
 # Print result for debugging
 assert result is not None
@@ -19,3 +16,7 @@ for schedule in result:
         print(court["number"])
         for time_slot, available in court["availability"].items():
             print(f"  {time_slot}: {available}")
+
+info = ScheduleParser.parse_club_info(html=data)
+if info is not None:
+    print(info)

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pl" lang="pl">
+
+<head>
+  <title>Twój Tenis &#183; Twój Profil &#183; Lista rezerwacji &#183; System rezerwacji kortów</title>
+  <meta name="viewport" content="width=1600, initial-scale=1, maximum-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <meta name="Robots" content="index,follow,all" />
+  <meta name="Author" content="Marcin Cichy" />
+  <meta http-equiv="Content-Language" content="pl" />
+  <base href="https://www.twojtenis.pl" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#999999">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <link type="text/css" rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.structure.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.theme.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/global.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/fonts.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/full_page.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/rwd.css" />
+  <link type="text/css" rel="stylesheet" href="/css/bootstrap/bootstrap-select.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/dashboard.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/dashboard_reservations.css" />
+
+
+</head>
+
+<body>
+  <header id="site_header" class="clubcolor-II">
+    <div class="container">
+      <div id="header_logo">
+        <a href="/pl/"><img src="/gfx/logo.png" alt="" /></a>
+      </div>
+      <div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent">
+        <div class="btnbox"><a href="/pl/ulubione_kluby.html"
+            class="button_big button_big-black smlownhead clubcolor-II">ulubione kluby</a> <a
+            href="/pl/dashboard/reservations.html" class="button_big button_big-black smlownhead clubcolor-II">Lista
+            rezerwacji</a> <a href="/pl/dashboard/payments.html"
+            class="button_big button_big-black smlownhead clubcolor-II">Płatności</a></div>
+      </div>
+      <div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent">
+        <div class="btnbox al_right">
+
+          <a href="/pl/dashboard/account.html" class="button_big button_big-black clubcolor-II">Twój Profil</a>
+          <a href="/pl/logout.html" class="button_big button_big-white clubcolor-I logoutbtn">wyloguj się <span
+              id="ses_counter" class="clubcolor-I">60:00</span></a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="site_header_place"></div>
+  <div id="site_content">
+    <div class="container">
+
+      <p>&nbsp;</p>
+      <div id="site_breadcrumbs" class="al_clear">
+        <ul class="breadcrumb clubcolor-II">
+          <li><a href="/"><span class="glyphicon glyphicon-home"></span> strona główna</a></li>
+          <li><a href="/pl/dashboard.html">Twój Tenis</a></li>
+          <li class="active"><a href="#">Lista rezerwacji</a></li>
+        </ul>
+      </div>
+      <div id="site_alerts" class="al_clear"></div>
+
+      <div class="col-xs-12 col-xs-12 col-md-3 col-lg-3 nopadding_l" id="dashboard_parent">
+        <div class="list-group" id="dashboard_menu"><a href="/pl/dashboard/payments.html"
+            class="list-group-item dashboard " data-toggle="popover" title="Płatności"
+            data-content="Aktualne płatności oraz historia.">
+            <h3><img src="/www/dashboard/7.png" alt="" /> <span class="dashboard_head">Płatności</span></h3>
+            <p class="dashborad_desc">Aktualne płatności oraz historia.</p>
+          </a><a href="/pl/dashboard/reservations.html" class="list-group-item dashboard active" data-toggle="popover"
+            title="Lista rezerwacji" data-content="Zarządzaj rezerwacjami oraz przeglądaj historię.">
+            <h3><img src="/www/dashboard/4.png" alt="" /> <span class="dashboard_head">Lista rezerwacji</span></h3>
+            <p class="dashborad_desc">Zarządzaj rezerwacjami oraz przeglądaj historię.</p>
+          </a><a href="/pl/dashboard/account.html" class="list-group-item dashboard " data-toggle="popover"
+            title="Twój profil" data-content="Zarządzaj swoim kontem, zmień hasło lub swoje dane.">
+            <h3><img src="/www/dashboard/1.png" alt="" /> <span class="dashboard_head">Twój profil</span></h3>
+            <p class="dashborad_desc">Zarządzaj swoim kontem, zmień hasło lub swoje dane.</p>
+          </a><span id="menu_slider" class="btn btn-default off"><span
+              class="glyphicon glyphicon-chevron-left"></span></span><br class="al_clear" />
+        </div>
+      </div>
+      <div class="col-xs-12 col-xs-12 col-md-9 col-lg-9 nopadding_r" id="dashboard_content">
+
+        <ul class="nav nav-tabs">
+          <li class="active"><a href="/pl/dashboard/reservations.html"><img src="/gfx/icons/reservations_active.png"
+                alt="" /> dzisiejsze i przyszłe rezerwacje</a></li>
+          <li class=""><a href="/pl/dashboard/reservations/past.html"><img src="/gfx/icons/reservations_past.png"
+                alt="" /> przeszłe rezerwacje</a></li>
+        </ul>
+
+        <p class="al_clear">&nbsp;</p>
+        <div class="col-xs-4">
+          <div class="rsv_box">
+            <a href="/pl/rsv/show/69184bbcb7df0.html">
+              <p class="al_center">17.11.2025<br />16:30 - 17:00 </p>
+              <h3 class="al_center"><img src="/www/clubs/emblems/90.png" /> Błonia Sport</h3>
+            </a>
+          </div>
+          <p>&nbsp;</p>
+        </div>
+        <div class="col-xs-4">
+          <div class="rsv_box">
+            <a href="/pl/rsv/show/69184bbd44351.html">
+              <p class="al_center">17.11.2025<br />16:30 - 17:00 </p>
+              <h3 class="al_center"><img src="/www/clubs/emblems/90.png" /> Błonia Sport</h3>
+            </a>
+          </div>
+          <p>&nbsp;</p>
+        </div>
+        <p class="al_clear"></p>
+        <div class="al_center"></div>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+  </div>
+  <footer id="site_footer" class="al_clear clubcolor-II">
+    <div class="lower_foot">
+      <div class="container">
+        <p class="al_clear">&nbsp;</p>
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="footer_menu">
+          <div class="flagbox al_left"><a href="/pl/"><img src="/www/langs/1.png" class="headflag active" /></a><a
+              href="/en/"><img src="/www/langs/2.png" class="headflag disactive" /></a></div>
+          <p class="al_clear">&nbsp;</p>
+          <ul>
+            <li><a href="/pl/o_nas.html">o nas</a></li>
+            <li><a href="/pl/regulamin.html">regulamin</a></li>
+            <li><a href="/pl/polityka_cookies.html">Polityka cookies</a></li>
+            <li><a href="/pl/kontakt.html">kontakt</a></li>
+          </ul>
+          <br class="al_clear" />&copy Twój Tenis 2.0.9.4. Wszelkie prawa zastrzeżone.<br />Build 2024-04-21 23:16
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 text-right 3wbox">
+          <div class="iconbox al_right">
+            <p><a href="https://www.facebook.com/Tw%C3%B3j-Tenis-wwwtwojtenispl-168322893231874/"><img
+                  src="/gfx/social/fb.png" /></a> <a href="https://www.instagram.com/twojtenis/"><img
+                  src="/gfx/social/inst.png" /></a></p>
+            <p><a href="https://www.kamiennakajaki.pl/" class="button_big button_big-black clubcolor-II">Kamienna
+                Kajaki</a></p>
+          </div>
+          <p class="al_clear">&nbsp;</p>
+          <a href="http://www.3wymiar.pl" target="_blank">framework 3wymiar <img src="/gfx/3wymiar.png" /></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <script type="text/javascript" src="/js/jquery/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="/js/ui/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/js/html5/html5.js"></script>
+  <script type="text/javascript" src="/js/global.js"></script>
+  <script type="text/javascript" src="/js/template/full_page.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/bootstrap-select.min.js"></script>
+  <script type="text/javascript" src="/js/ui/minified/i18n/jquery.ui.datepicker-pl.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/i18n/defaults-pl_PL.min.js"></script>
+  <script type="text/javascript" src="/js/template/dashboard.js"></script>
+  <script type="text/javascript" src="/js/template/dashboard_reservations.js"></script>
+
+  <script type="text/javascript">$(document).ready(function () { startTimer(3600, $("#ses_counter")); });</script>
+</body>
+
+</html>

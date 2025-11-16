@@ -14,3 +14,4 @@ wheels/
 # configurations
 .env
 config/config.json
+config/session.json

@@ -1,7 +1,5 @@
 """HTTP client for TwojTenis.pl API."""
 
-# import asyncio
-import json
 import logging
 import re
 from collections.abc import Callable
@@ -9,80 +7,12 @@ from typing import Any
 
 import httpx
 
+from .auth import session_manager
 from .config import config
 from .models import ApiErrorException
+from .utils import extract_id_from_url
 
 logger = logging.getLogger(__name__)
-
-
-async def with_session_retry(
-    operation: Callable, session_manager, *args, **kwargs
-) -> Any:
-    """Execute an operation with session retry logic on server errors.
-
-    Args:
-        operation: The async function to execute
-        session_manager: SessionManager instance for refreshing sessions
-        *args: Arguments to pass to the operation
-        **kwargs: Keyword arguments to pass to the operation
-
-    Returns:
-        Result of the operation
-
-    Raises:
-        ApiErrorException: If operation fails after retry attempts
-    """
-    max_retries = 1  # One retry after session refresh
-    last_exception = ApiErrorException(
-        code="UNKNOWN_ERROR",
-        message="Unknown error occurred",
-    )
-
-    for attempt in range(max_retries + 1):
-        try:
-            # Get current session
-            session = await session_manager.get_session()
-            if not session:
-                raise ApiErrorException(
-                    code="NO_SESSION",
-                    message="No active session available",
-                )
-
-            # Execute the operation with current session
-            result = await operation(*args, phpsessid=session.phpsessid, **kwargs)
-            return result
-
-        except ApiErrorException as e:
-            last_exception = e
-
-            # If this is a server/auth error and we haven't retried yet, try refreshing session
-            if attempt < max_retries and (
-                e.code in ["HTTP_ERROR", "AUTH_ERROR", "REQUEST_FAILED"]
-                or (
-                    e.code == "HTTP_ERROR"
-                    and any(
-                        code in str(e) for code in ["401", "403", "500", "502", "503"]
-                    )
-                )
-            ):
-                logger.warning(
-                    f"Server error on attempt {attempt + 1}, refreshing session: {e.message}"
-                )
-                await session_manager.refresh_session()
-                continue
-            else:
-                # No more retries or non-retryable error
-                break
-
-        except Exception as e:
-            last_exception = ApiErrorException(
-                code="UNEXPECTED_ERROR",
-                message=f"Unexpected error: {str(e)}",
-            )
-            break
-
-    # All attempts failed
-    raise last_exception
 
 
 class TwojTenisClient:
@@ -103,6 +33,80 @@ class TwojTenisClient:
             "Pragma": "no-cache",
         }
 
+    async def refresh_user_session(self):
+        """Force refresh user session."""
+        logger.info("Forcing user session refresh")
+        session_id = await self._login(config.email, config.password)
+        if session_id:
+            await session_manager.save_session(session_id=session_id)
+
+    async def with_session_retry(self, operation: Callable, *args, **kwargs) -> Any:
+        """Execute an operation with session retry logic on server errors.
+
+        Args:
+            operation: The async function to execute
+            *args: Arguments to pass to the operation
+            **kwargs: Keyword arguments to pass to the operation
+
+        Returns:
+            Result of the operation
+
+        Raises:
+            ApiErrorException: If operation fails after retry attempts
+        """
+        max_retries = config.retry_attempts | 1
+        last_exception = ApiErrorException(
+            code="UNKNOWN_ERROR",
+            message="Unknown error occurred",
+        )
+
+        for attempt in range(max_retries + 1):
+            try:
+                session = await session_manager.get_session()
+                if not session:
+                    raise ApiErrorException(
+                        code="NO_SESSION",
+                        message="No active session available",
+                    )
+
+                # Execute with current session
+                result = await operation(*args, **kwargs)
+                return result
+
+            except ApiErrorException as e:
+                last_exception = e
+
+                # If this is a server/auth error and we haven't retried yet, try refreshing
+                if attempt < max_retries and (
+                    e.code
+                    in ["NO_SESSION", "HTTP_ERROR", "AUTH_ERROR", "REQUEST_FAILED"]
+                    or (
+                        e.code == "HTTP_ERROR"
+                        and any(
+                            code in str(e)
+                            for code in ["401", "403", "500", "502", "503"]
+                        )
+                    )
+                ):
+                    attempt += 1
+                    logger.warning(
+                        f"Server error {e.message} on attempt {attempt}, refreshing the session"
+                    )
+                    await self.refresh_user_session()
+                    continue
+                else:
+                    # No more retries or non-retryable error
+                    break
+
+            except Exception as e:
+                last_exception = ApiErrorException(
+                    code="UNEXPECTED_ERROR",
+                    message=f"Unexpected error: {str(e)}",
+                )
+                break
+
+        raise last_exception
+
     async def _make_request(
         self,
         method: str,
@@ -111,7 +115,6 @@ class TwojTenisClient:
         params: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
         form_data: dict[str, Any] | None = None,
-        phpsessid: str | None = None,
     ) -> tuple[Any | None, dict[str, str] | None]:
         """Make HTTP request
 
@@ -127,22 +130,22 @@ class TwojTenisClient:
         Returns:
             Tuple of (response_data, response_headers)
         """
-        # Prepare headers
         request_headers = dict(self.static_headers)
         if headers:
             request_headers.update(headers)
 
-        # Add session cookie if provided
-        if phpsessid:
-            request_headers["Cookie"] = f"PHPSESSID={phpsessid}; CooAcc=1"
+        session = await session_manager.get_session()
+        if not session:
+            raise ApiErrorException(
+                code="NO_SESSION",
+                message="No active session available",
+            )
+        request_headers["Cookie"] = f"PHPSESSID={session.phpsessid}; CooAcc=1"
 
-        # Prepare request data
         request_data = None
         if form_data:
-            # For multipart form data
             request_data = form_data
         elif data:
-            # For URL-encoded form data
             request_data = data
             if "Content-Type" not in request_headers:
                 request_headers["Content-Type"] = "application/x-www-form-urlencoded"
@@ -157,10 +160,7 @@ class TwojTenisClient:
                     data=request_data,
                 )
 
-                # Extract response headers
                 response_headers = dict(response.headers)
-
-                # Handle response based on content type
                 content_type = response.headers.get("content-type", "").lower()
 
                 if "application/json" in content_type:
@@ -170,8 +170,7 @@ class TwojTenisClient:
                 else:
                     response_data = response.content
 
-                # Check for successful response
-                if response.status_code >= 200 and response.status_code < 300:
+                if response.status_code >= 200 and response.status_code < 303:
                     return response_data, response_headers
 
                 logger.warning(f"HTTP {response.status_code}: {response.text[:200]}")
@@ -190,68 +189,7 @@ class TwojTenisClient:
                 details={"error": str(e)},
             ) from e
 
-    # async def _make_retriable_request(
-    #     self,
-    #     method: str,
-    #     url: str,
-    #     headers: dict[str, str] | None = None,
-    #     params: dict[str, Any] | None = None,
-    #     data: dict[str, Any] | None = None,
-    #     form_data: dict[str, Any] | None = None,
-    #     phpsessid: str | None = None,
-    # ) -> tuple[Any | None, dict[str, str] | None]:
-    #     """Make HTTP request with retry logic.
-
-    #     Args:
-    #         method: HTTP method
-    #         url: Request URL
-    #         headers: Request headers
-    #         params: URL parameters
-    #         data: Request data
-    #         form_data: Form data for multipart requests
-    #         phpsessid: PHP session ID for authentication
-
-    #     Returns:
-    #         Tuple of (response_data, response_headers)
-    #     """
-    #     # Make request with retry logic
-    #     last_exception = None
-    #     retry_attempts = config.retry_attempts
-    #     for attempt in range(retry_attempts):
-    #         try:
-    #             response_data, _ = await self._make_request(
-    #                 method=method,
-    #                 url=url,
-    #                 headers=headers,
-    #                 params=params,
-    #                 data=data,
-    #                 form_data=form_data,
-    #                 phpsessid=phpsessid,
-    #             )
-
-    #         except Exception as e:
-    #             last_exception = e
-    #             logger.warning(f"Unexpected error on attempt {attempt + 1}: {e}")
-    #             if attempt < retry_attempts - 1:
-    #                 await asyncio.sleep(self.retry_delay * (2**attempt))
-    #                 continue
-    #             break
-
-    #     # All attempts failed
-    #     if last_exception:
-    #         raise ApiErrorException(
-    #             code="REQUEST_FAILED",
-    #             message=f"Request failed after {retry_attempts} attempts",
-    #             details={"error": str(last_exception)},
-    #         )
-    #     else:
-    #         raise ApiErrorException(
-    #             code="REQUEST_FAILED",
-    #             message=f"Request failed after {retry_attempts} attempts",
-    #             details={},
-    #         )
-
-    async def login(self, email: str, password: str) -> str | None:
+    async def _login(self, email: str, password: str) -> str | None:
         """Login to TwojTenis.pl and return PHPSESSID.
 
         Args:
@@ -314,12 +252,255 @@ class TwojTenisClient:
             logger.error(f"Login failed: {e.message}")
             return None
 
-    async def keep_logged(self, phpsessid: str) -> bool:
-        """Keep session alive.
+    async def get_club_info(
+        self,
+        club_id: str,
+    ) -> str | None:
+        """Get club's information, working hours table"""
+
+        url = f"{self.base_url}/pl/kluby/{club_id}/courts_list.html"
+        headers = {
+            "Referer": f"{self.base_url}/pl/home.html",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "Priority": "u=0, i",
+        }
+
+        response_data, _ = await self._make_request(
+            method="GET",
+            url=url,
+            headers=headers,
+        )
+        return response_data
+
+    async def get_club_schedule(
+        self,
+        club_id: str,
+        sport_id: int,
+        date: str,
+    ) -> str | None:
+        """Get club schedule for specific date and sport.
+
+        Args:
+            club_id: Club identifier
+            sport_id: Sport ID
+            date: Date in DD.MM.YYYY format
+            phpsessid: PHP session ID
+
+        Returns:
+            Schedule data if successful, None otherwise
+        """
+        url = f"{self.base_url}/ajax.php?load=courts_list"
+
+        data = {
+            "date": date,
+            "club_url": club_id,
+            "page": "NaN",
+            "spr": sport_id,
+            "zsh": "0",
+            "tz": "0",
+        }
+
+        headers = {
+            "Origin": self.base_url,
+            "Referer": f"{self.base_url}/pl/kluby/{club_id}.html",
+            "X-Requested-With": "XMLHttpRequest",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-GPC": "1",
+            "TE": "trailers",
+        }
+
+        response_data, _ = await self._make_request(
+            method="POST",
+            url=url,
+            data=data,
+            headers=headers,
+        )
+        return response_data
+
+    async def get_reservations(self) -> str | None:
+        """Get user's current reservations.
 
         Args:
             phpsessid: PHP session ID
 
+        Returns:
+            HTML response with reservations if successful, None otherwise
+        """
+        url = f"{self.base_url}/pl/dashboard/reservations.html"
+
+        headers = {
+            "Referer": f"{self.base_url}/pl/dashboard/reservations.html",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "Priority": "u=0, i",
+            "TE": "trailers",
+        }
+
+        try:
+            response_data, _ = await self._make_request(
+                method="GET",
+                url=url,
+                headers=headers,
+            )
+            logger.debug("Reservations retrieved successfully")
+            return response_data
+
+        except ApiErrorException as e:
+            logger.error(f"Failed to get reservations: {e.message}")
+            return None
+
+    async def get_reservation(self, booking_id: str) -> str | None:
+        url = f"{self.base_url}/pl/rsv/show/{booking_id}.html"
+
+        headers = {
+            "Referer": f"{self.base_url}/pl/dashboard/reservations/past.html",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "Priority": "u=0, i",
+            "TE": "trailers",
+        }
+
+        try:
+            response_data, _headers = await self._make_request(
+                method="GET",
+                url=url,
+                headers=headers,
+            )
+            logger.debug("Reservations retrieved successfully")
+            return response_data
+
+        except ApiErrorException as e:
+            logger.error(f"Failed to get reservations: {e.message}")
+            return None
+
+    async def make_reservation(
+        self,
+        club_num: int,
+        sport_id: int,
+        court_number: int,
+        date: str,
+        start_time: str,
+        end_time: str,
+    ) -> str | None:
+        """Make a court reservation.
+
+        Args:
+            club_num: Club number
+            sport_id: Sport ID
+            court_number: Court number starting from 1
+            date: Date in DD.MM.YYYY format
+            start_time: Start time in HH:MM format
+            end_time: End time in HH:MM format
+
+        Returns:
+            True if reservation successful, False otherwise
+        """
+        url = f"{self.base_url}/pl/rsv/make.html"
+        form_data = {
+            "rsv_usernote_1": "",
+            "rsv_date_1": date,
+            "rsv_sport_1": sport_id,
+            "rsv_cort_1": court_number,
+            "rsv_hourfrom_1": start_time,
+            "rsv_hourto_1": end_time,
+            "rsv_price_1": "100",
+            "rsv_dis_1": "0",
+            "rsv_disu_1": "",
+            "rsv_dist_1": "",
+            "back_to": "e",
+            "action": "add_rsv",
+            "club_id": club_num,
+        }
+
+        headers = {
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "Priority": "u=0, i",
+            "TE": "trailers",
+        }
+
+        try:
+            _, _headers = await self._make_request(
+                method="POST",
+                url=url,
+                form_data=form_data,
+                headers=headers,
+            )
+            logger.info(
+                f"Reservation made for club #{club_num}, court {court_number} on {date} from {start_time} to {end_time}"
+            )
+            if _headers is not None:
+                booking_id = extract_id_from_url(_headers.get("location", ""))
+                return booking_id
+
+        except ApiErrorException as e:
+            logger.error(f"Failed to make reservation: {e.message}")
+
+        return None
+
+    async def delete_reservation(
+        self,
+        booking_id: str,
+    ) -> bool:
+        """Delete a court reservation.
+
+        Args:
+            book_id: Reservation ID
+
+        Returns:
+            True if deletion successful, False otherwise
+        """
+        if not booking_id:
+            return False
+
+        url = f"{self.base_url}/pl/rsv/del/{booking_id}.html?back=/pl/dashboard/reservations.html"
+
+        headers = {
+            "Origin": self.base_url,
+            "Referer": f"{self.base_url}/pl/rsv/show/{booking_id}.html",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "TE": "trailers",
+        }
+
+        try:
+            _response_data, _ = await self._make_request(
+                method="GET",
+                url=url,
+                headers=headers,
+            )
+
+            logger.info(f"Reservation {booking_id} deleted")
+            return True
+
+        except ApiErrorException as e:
+            logger.error(f"Failed to delete reservation {booking_id}: {e.message}")
+            return False
+
+    async def keep_logged(self) -> bool:
+        """Keep session alive.
         Returns:
             True if session is still valid, False otherwise
         """
@@ -343,7 +524,6 @@ class TwojTenisClient:
                 method="POST",
                 url=url,
                 headers=request_headers,
-                phpsessid=phpsessid,
             )
 
             # If we get here without authentication error, session is valid
@@ -357,244 +537,3 @@ class TwojTenisClient:
             else:
                 logger.error(f"Keep logged failed: {e.message}")
                 return False
-
-    async def get_club_schedule(
-        self,
-        club_url: str,
-        sport_id: int,
-        date: str,
-        phpsessid: str,
-    ) -> str | None:
-        """Get club schedule for specific date and sport.
-
-        Args:
-            club_url: Club URL identifier
-            sport_id: Sport ID (84=badminton, 70=tennis)
-            date: Date in DD.MM.YYYY format
-            phpsessid: PHP session ID
-
-        Returns:
-            Schedule data if successful, None otherwise
-        """
-        url = f"{self.base_url}/ajax.php?load=courts_list"
-
-        data = {
-            "date": date,
-            "club_url": club_url,
-            "page": "NaN",
-            "spr": sport_id,
-            "zsh": "0",
-            "tz": "0",
-        }
-
-        headers = {
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/kluby/{club_url}.html",
-            "X-Requested-With": "XMLHttpRequest",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-GPC": "1",
-            "TE": "trailers",
-        }
-
-        try:
-            response_data, _ = await self._make_request(
-                method="POST",
-                url=url,
-                data=data,
-                headers=headers,
-                phpsessid=phpsessid,
-            )
-            logger.debug(f"Schedule retrieved for {club_url} on {date}")
-            return response_data
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to get club schedule: {e.message}")
-            return None
-
-    async def get_reservations(self, phpsessid: str) -> str | None:
-        """Get user's current reservations.
-
-        Args:
-            phpsessid: PHP session ID
-
-        Returns:
-            HTML response with reservations if successful, None otherwise
-        """
-        url = f"{self.base_url}/pl/dashboard/reservations.html"
-
-        headers = {
-            "Referer": f"{self.base_url}/pl/dashboard/account.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-
-        try:
-            response_data, _ = await self._make_request(
-                method="GET",
-                url=url,
-                headers=headers,
-                phpsessid=phpsessid,
-            )
-
-            logger.debug("Reservations retrieved successfully")
-            return response_data
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to get reservations: {e.message}")
-            return None
-
-    async def make_reservation(
-        self,
-        club_id: str,
-        sport_id: int,
-        court_number: int,
-        date: str,
-        hour: str,
-        phpsessid: str,
-    ) -> bool:
-        """Make a court reservation.
-
-        Args:
-            club_id: Club ID
-            sport_id: Sport ID
-            court_number: Court number
-            date: Date in DD.MM.YYYY format
-            hour: Hour in HH:MM format
-            phpsessid: PHP session ID
-
-        Returns:
-            True if reservation successful, False otherwise
-        """
-        url = f"{self.base_url}/pl/rsv/make.html"
-
-        # Prepare reservation data
-        date_key = date.replace(".", "")
-        reservation_key = (
-            f"rsv_{date_key}_{sport_id}_{court_number}_{hour.replace(':', '_')}"
-        )
-        reservation_value = {
-            "sport_id": sport_id,
-            "cort_id": court_number,
-            "date": date,
-            "hour": hour,
-        }
-
-        form_data = {
-            "club_id": club_id,
-            "type": "corts",
-            reservation_key: json.dumps(reservation_value),
-        }
-
-        headers = {
-            "Referer": f"{self.base_url}/pl/kluby/{club_id}.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-
-        try:
-            response_data, _ = await self._make_request(
-                method="POST",
-                url=url,
-                form_data=form_data,
-                headers=headers,
-                phpsessid=phpsessid,
-            )
-
-            # Check if reservation was successful (this would need to be based on actual response)
-            logger.info(
-                f"Reservation made for club {club_id}, court {court_number} on {date} at {hour}"
-            )
-            return True
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to make reservation: {e.message}")
-            return False
-
-    async def delete_reservation(
-        self,
-        club_id: str,
-        sport_id: int,
-        court_number: int,
-        date: str,
-        hour: str,
-        phpsessid: str,
-    ) -> bool:
-        """Delete a court reservation.
-
-        Args:
-            club_id: Club ID
-            sport_id: Sport ID
-            court_number: Court number
-            date: Date in DD.MM.YYYY format
-            hour: Hour in HH:MM format
-            phpsessid: PHP session ID
-
-        Returns:
-            True if deletion successful, False otherwise
-        """
-        # This is an assumption based on the requirements
-        # The actual endpoint might be different
-        url = f"{self.base_url}/pl/rsv/delete.html"
-
-        # Prepare deletion data (assuming similar format to make reservation)
-        date_key = date.replace(".", "")
-        reservation_key = (
-            f"rsv_{date_key}_{sport_id}_{court_number}_{hour.replace(':', '_')}"
-        )
-        reservation_value = {
-            "sport_id": sport_id,
-            "cort_id": court_number,
-            "date": date,
-            "hour": hour,
-        }
-
-        data = {
-            "club_id": club_id,
-            "type": "corts",
-            reservation_key: json.dumps(reservation_value),
-            "action": "delete",
-        }
-
-        headers = {
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/dashboard/reservations.html",
-            "X-Requested-With": "XMLHttpRequest",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-GPC": "1",
-            "TE": "trailers",
-        }
-
-        try:
-            response_data, _ = await self._make_request(
-                method="POST",
-                url=url,
-                data=data,
-                headers=headers,
-                phpsessid=phpsessid,
-            )
-
-            # Check if deletion was successful (this would need to be based on actual response)
-            logger.info(
-                f"Reservation deleted for club {club_id}, court {court_number} on {date} at {hour}"
-            )
-            return True
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to delete reservation: {e.message}")
-            return False

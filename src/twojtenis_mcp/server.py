@@ -22,7 +22,6 @@ from .config import config
 from .endpoints.booking import booking_endpoint
 from .endpoints.clubs import clubs_endpoint
 from .endpoints.reservations import reservations_endpoint
-from .models import SportId
 
 # Configure logging
 logging.basicConfig(
@@ -35,14 +34,14 @@ mcp = FastMCP("TwojTenis Court Booking Server")
 
 
 @mcp.tool()
-async def get_clubs() -> list[dict[str, Any]]:
+async def get_all_clubs() -> list[dict[str, Any]]:
     """Get list of available tennis and badminton clubs.
 
     Returns:
         List of clubs with their details
     """
     try:
-        clubs = clubs_endpoint.get_clubs()
+        clubs = await clubs_endpoint.get_clubs()
         logger.info(f"Retrieved {len(clubs)} clubs")
         return clubs
 
@@ -52,13 +51,15 @@ async def get_clubs() -> list[dict[str, Any]]:
 
 
 @mcp.tool()
-async def get_sports() -> dict[str, Any]:
-    """Get list of supported sports.
+async def get_all_sports() -> dict[int, str]:
+    """Get list of all supported sports.
 
     Returns:
         List of sports with their IDs and names
     """
-    sports = {str(sport): sport.value for sport in SportId}
+    sports: dict[int, str] = {}
+    for sport in clubs_endpoint.get_sports():
+        sports[sport["id"]] = sport["name"]
     logger.info(f"Retrieved {len(sports)} sports")
     return sports
 
@@ -69,7 +70,7 @@ async def get_club_schedule(club_id: str, sport_id: int, date: str) -> dict[str,
 
     Args:
         club_id: Club identifier (e.g., 'blonia_sport')
-        sport_id: Sport ID (84 for badminton, 70 for tennis)
+        sport_id: Sport ID
         date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
 
     Returns:
@@ -106,33 +107,61 @@ async def get_reservations() -> list[dict[str, Any]]:
 
 
 @mcp.tool()
+async def get_reservation_details(booking_id: str) -> dict[str, Any]:
+    """Get reservation details for the booking_id.
+
+    Returns:
+        Reservation details
+    """
+    try:
+        reservation = await reservations_endpoint.get_reservation_details(booking_id)
+        logger.info(f"Retrieved reservation details for {booking_id}")
+        return reservation
+
+    except Exception as e:
+        logger.error(f"Error getting reservation details for {booking_id}: {e}")
+        return {}
+
+
+@mcp.tool()
 async def put_reservation(
-    club_id: str, court_number: int, date: str, hour: str, sport_id: int
+    club_id: str,
+    court_number: int,
+    date: str,
+    start_time: str,
+    end_time: str,
+    sport_id: int,
 ) -> dict[str, Any]:
     """Make a court reservation.
 
     Args:
         club_id: Club identifier (e.g., 'blonia_sport')
-        court_number: Court number (e.g., 1, 2, 3...)
+        court_number: Court number starting from 1 (e.g., 1, 2, 3...)
         date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
-        hour: Time in HH:MM format (e.g., '10:00', '10:30')
+        start_time: Start time in HH:MM format (e.g., '10:00')
+        end_time: End time in HH:MM format (e.g., '11:00')
         sport_id: Sport ID (84 for badminton, 70 for tennis)
 
     Returns:
         Reservation result with success status and details
     """
     try:
+        club = await clubs_endpoint.get_club_by_id(club_id)
+        if not club:
+            return {"success": False, "message": f"Error: unknown club {club_id}"}
+
         result = await reservations_endpoint.make_reservation(
-            club_id=club_id,
+            club_num=club.num,
             court_number=court_number,
             date=date,
-            hour=hour,
+            start_time=start_time,
+            end_time=end_time,
             sport_id=sport_id,
         )
 
         if result["success"]:
             logger.info(
-                f"Reservation made: {club_id}, court {court_number}, {date} {hour}"
+                f"Reservation made: {club_id}, court {court_number}, {date} from {start_time} to {end_time}"
             )
         else:
             logger.warning(f"Reservation failed: {result['message']}")
@@ -145,29 +174,20 @@ async def put_reservation(
 
 
 @mcp.tool()
-async def delete_reservation(
-    club_id: str, court_number: int, date: str, hour: str
-) -> dict[str, Any]:
+async def delete_reservation(booking_id: str) -> dict[str, Any]:
     """Delete a court reservation.
 
     Args:
-        club_id: Club identifier (e.g., 'blonia_sport')
-        court_number: Court number (e.g., 1, 2, 3...)
-        date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
-        hour: Time in HH:MM format (e.g., '10:00', '10:30')
+        booking_id: Reservation identifier (string)
 
     Returns:
         Deletion result with success status and message
     """
     try:
-        result = await reservations_endpoint.delete_reservation(
-            club_id=club_id, court_number=court_number, date=date, hour=hour
-        )
+        result = await reservations_endpoint.delete_reservation(booking_id=booking_id)
 
         if result["success"]:
-            logger.info(
-                f"Reservation deleted: {club_id}, court {court_number}, {date} {hour}"
-            )
+            logger.info(f"Reservation deleted: {booking_id}")
         else:
             logger.warning(f"Reservation deletion failed: {result['message']}")
 
@@ -180,7 +200,6 @@ async def delete_reservation(
 
 async def initialize() -> None:
     """Initialize the server components."""
-    logger.info("Starting TwojTenis MCP Server...")
 
     # Initialize session manager
     logger.info("Initializing session manager...")
@@ -189,7 +208,6 @@ async def initialize() -> None:
     # Get configuration info
     config_info = config.to_dict()
     logger.info(f"Configuration loaded: {config_info}")
-    logger.info("TwojTenis MCP Server is ready to accept connections.")
 
 
 def main() -> None:
@@ -198,7 +216,7 @@ def main() -> None:
     asyncio.run(initialize())
 
     # Run the MCP server (synchronous)
-    mcp.run()
+    mcp.run(show_banner=False)
 
 
 if __name__ == "__main__":

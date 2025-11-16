@@ -1,12 +1,13 @@
 """Booking and schedule-related MCP endpoints."""
 
+import json
 import logging
 from typing import Any
 
-from ..auth import session_manager
-from ..client import TwojTenisClient, with_session_retry
-from ..models import ApiErrorException, Court, Schedule, SportId
+from ..client import TwojTenisClient
+from ..models import ApiErrorException, Court, Schedule
 from ..schedule_parser import ScheduleParser
+from ..utils import validate_date
 
 logger = logging.getLogger(__name__)
 
@@ -25,33 +26,31 @@ class BookingEndpoint:
 
         Args:
             club_id: Club identifier
-            sport_id: Sport identifier (84=badminton, 70=tennis)
+            sport_id: Sport identifier
             date: Date in DD.MM.YYYY format
 
         Returns:
             Schedule data dictionary
         """
+        # Validate inputs
+        if not validate_date(date):
+            return {
+                "success": False,
+                "message": "Invalid date format. Use DD.MM.YYYY format.",
+                "data": None,
+            }
+
+        if sport_id <= 0:
+            return {
+                "success": False,
+                "message": "Invalid sport_id. Use get_sports to fetch available sport IDs.",
+                "data": None,
+            }
+
         try:
-            # Validate inputs
-            if not self._validate_date(date):
-                return {
-                    "success": False,
-                    "message": "Invalid date format. Use DD.MM.YYYY format.",
-                    "data": None,
-                }
-
-            if sport_id not in SportId:
-                return {
-                    "success": False,
-                    "message": "Invalid sport ID",
-                    "data": None,
-                }
-
-            # Get schedule data with retry logic
-            schedule_data = await with_session_retry(
+            schedule_data = await self.client.with_session_retry(
                 self.client.get_club_schedule,
-                session_manager,
-                club_url=club_id,
+                club_id=club_id,
                 sport_id=sport_id,
                 date=date,
             )
@@ -62,43 +61,45 @@ class BookingEndpoint:
                     "message": "Failed to retrieve schedule data.",
                     "data": None,
                 }
+            json_data = json.loads(schedule_data)
+            html = json_data.get("schedule")
 
-            # Parse schedule
             schedules = ScheduleParser.parse_schedules(
-                json_str=schedule_data,
+                html=html,
             )
-            if not schedules:
-                return {
-                    "success": True,
-                    "message": "Empty schedule data.",
-                    "data": None,
-                }
-            courts = []
-            for sched in schedules:
-                if int(sched["sport"]) == int(sport_id):
-                    courts_data = sched["data"]
-                    for c in courts_data:
-                        courts.append(
-                            Court(number=c["number"], availability=c["availability"])
+            if schedules:
+                courts = []
+                for sched in schedules:
+                    if int(sched["sport"]) == int(sport_id):
+                        courts_data = sched["data"]
+                        for c in courts_data:
+                            courts.append(
+                                Court(
+                                    number=c["number"], availability=c["availability"]
+                                )
+                            )
+                        schedule = Schedule(
+                            club_id=club_id,
+                            sport_id=sport_id,
+                            date=date,
+                            courts=courts,
                         )
-                    schedule = Schedule(
-                        club_id=club_id,
-                        sport_id=SportId(sport_id),
-                        date=date,
-                        courts=courts,
-                    )
-                    logger.info(
-                        f"Retrieved schedule for {club_id}, sport {sport_id} on {date}"
-                    )
-                    return {
-                        "success": True,
-                        "message": "Schedule retrieved successfully",
-                        "data": schedule.model_dump(),
-                    }
+                        logger.info(f"Retrieved schedule for {club_id} on {date}")
+                        return {
+                            "success": True,
+                            "message": "Schedule retrieved successfully",
+                            "data": schedule.model_dump(),
+                        }
+
+            # missing schedule data, all courts are unavailable
+            club_info = await self.client.with_session_retry(
+                self.client.get_club_info, club_id=club_id
+            )
+            empty_hours = ScheduleParser.parse_schedules(club_info)
             return {
                 "success": True,
-                "message": "No schedules for the selected sport found. Try use different parameters",
-                "data": None,
+                "message": "Empty schedule data. Booking unavailable",
+                "data": empty_hours,
             }
 
         except ApiErrorException as e:
@@ -115,36 +116,6 @@ class BookingEndpoint:
                 "message": f"Unexpected error: {str(e)}",
                 "data": None,
             }
-
-    def _validate_date(self, date: str) -> bool:
-        """Validate date format (DD.MM.YYYY).
-
-        Args:
-            date: Date string to validate
-
-        Returns:
-            True if valid, False otherwise
-        """
-        try:
-            import re
-
-            if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", date):
-                return False
-
-            day, month, year = map(int, date.split("."))
-
-            # Basic validation
-            if not (1 <= day <= 31):
-                return False
-            if not (1 <= month <= 12):
-                return False
-            if not (2020 <= year <= 2030):  # Reasonable year range
-                return False
-
-            return True
-
-        except (ValueError, AttributeError):
-            return False
 
 
 # Global booking endpoint instance

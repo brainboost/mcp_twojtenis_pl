@@ -1,0 +1,677 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pl" lang="pl">
+<head>
+  <title>Twój Tenis  &#183;  Błonia Sport  &#183;  System rezerwacji kortów</title>
+  <meta name="viewport" content="width=1600, initial-scale=1, maximum-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="description" content="Lista klubów w których możesz zarezerwować kort przez Twój Tenis" />
+  <meta name="keywords" content="Kluby tenisowe" />
+  <meta name="Robots" content="index,follow,all" />
+  <meta name="Author" content="Marcin Cichy" />
+  <meta http-equiv="Content-Language" content="pl" />
+  <base href="https://www.twojtenis.pl" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#999999">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <link type="text/css" rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.structure.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/ui/jquery-ui.theme.min.css" />
+  <link type="text/css" rel="stylesheet" href="/css/global.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/fonts.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/full_page.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/rwd.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/club.css" />
+  <link type="text/css" rel="stylesheet" href="/css/template/club_schedule.css" />
+  
+  
+<style type="text/css">
+.clubcolor-I, body{
+  background-color:#ffffff !important;
+  color:#000000 !important;
+}
+.clubcolor-II{
+  background-color:#458a4b !important;
+  color:#ffffff !important;
+}
+.clubcolor-III, input, textarea, select{
+  background-color:#ffffff !important;
+  color:#000000 !important;
+}
+a{
+  color:#000000;
+}
+.clubcolor-I a{
+  color:#000000;
+}
+.clubcolor-II a{
+  color:#ffffff;
+}
+.clubcolor-III a{
+  color:#000000;
+}
+</style>
+<script type="text/javascript">
+  var club_id = 90;
+</script>
+
+</head>
+<body>
+  <header id="site_header" class="clubcolor-II">
+<div class="container">
+  <div id="header_logo">
+    <a href="/pl/"><img src="/gfx/logo.png" alt="" /></a>
+  </div><div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent">
+	   <div class="btnbox"><a href="/pl/ulubione_kluby.html" class="button_big button_big-black smlownhead clubcolor-II">ulubione kluby</a> <a href="/pl/dashboard/reservations.html" class="button_big button_big-black smlownhead clubcolor-II">Lista rezerwacji</a> <a href="/pl/dashboard/payments.html" class="button_big button_big-black smlownhead clubcolor-II">Płatności</a></div>
+	 </div><div class="nopadding col-xs-12 col-sm-12 col-md-6 col-lg-6 btnbox_parent"><div class="btnbox al_right">
+
+	        <a href="/pl/dashboard/account.html" class="button_big button_big-black clubcolor-II">Twój Profil</a>
+		     <a href="/pl/logout.html" class="button_big button_big-white clubcolor-I logoutbtn">wyloguj się <span id="ses_counter" class="clubcolor-I">60:00</span></a>
+		   </div></div>
+</div></header>
+  <div id="site_header_place"></div>
+  <div id="site_content">
+    <div class="container">
+      
+      <p>&nbsp;</p>
+	   <div id="site_breadcrumbs" class="al_clear">
+<ul class="breadcrumb clubcolor-II"><li><a href="/"><span class="glyphicon glyphicon-home"></span> strona główna</a></li><li><a href="/pl/kluby.html">kluby</a></li><li class="active"><a href="#">Błonia Sport</a></li></ul></div>
+	   <div id="site_alerts" class="al_clear"></div>
+      <a name="nav"></a>
+<ul class="nav nav-tabs" id="main_menu">
+  <li class=""><a href="/pl/kluby/blonia_sport/info.html" class=""><img src="/www/clubs/emblems/90.png" alt="" class="club_menu_gfx" /> Strona Klubowa </a></li>
+  <li class="active"><a href="/pl/kluby/blonia_sport/courts_list.html" class="clubcolor-II"><img src="/gfx/icons/courts_list.png" class="club_menu_gfx" alt="" /> grafik rezerwacji</a></li><li class=""><a href="/pl/kluby/blonia_sport/prices.html" class=""><img src="/gfx/icons/prices.png" class="club_menu_gfx" alt="" /> cennik</a></li><li class=""><a href="/pl/kluby/blonia_sport/comments.html" class=""><img src="/gfx/icons/comm_rats.png" class="club_menu_gfx" alt="" /> oceny i komentarze</a></li><li class=""><a href="/pl/kluby/blonia_sport/gallery.html" class=""><img src="/gfx/icons/pictures.png" class="club_menu_gfx" alt="" /> galeria</a></li><li class=""><a href="/pl/kluby/blonia_sport/club_contact.html" class=""><img src="/gfx/icons/email.png" class="club_menu_gfx" alt="" /> kontakt</a></li></ul>
+
+<p class="al_clear"></p><h3 class="al_center">kontakt telefoniczny z klubem: +48 728 871 400</h3>
+  <div class="" id="quicalendar"><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="29.10.2025">środa<h3 class="nopadding nomargin">29.10</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="30.10.2025">czwartek<h3 class="nopadding nomargin">30.10</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="31.10.2025">piątek<h3 class="nopadding nomargin">31.10</h3>2025</div><div class="btn btn-default active smpadding col-xs-2 al_center borderline qui-item" date="01.11.2025"><strong>sobota</strong><h3 class="nopadding nomargin">01.11</h3><strong>2025</strong></div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="02.11.2025">niedziela<h3 class="nopadding nomargin">02.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="03.11.2025">poniedziałek<h3 class="nopadding nomargin">03.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="04.11.2025">wtorek<h3 class="nopadding nomargin">04.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="05.11.2025">środa<h3 class="nopadding nomargin">05.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="06.11.2025">czwartek<h3 class="nopadding nomargin">06.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="07.11.2025">piątek<h3 class="nopadding nomargin">07.11</h3>2025</div><div class="btn btn-default smpadding col-xs-1 al_center borderline qui-item" date="08.11.2025">sobota<h3 class="nopadding nomargin">08.11</h3>2025</div><p class="al_clear"></p>
+	 <div class="arrow"></div>
+  </div>
+
+<div class="well">
+
+  <div class="col-xs-2">
+    <div class="input-group">
+	    <span class="input-group-addon linklike" id="court_calendar-icon"><span class="glyphicon glyphicon-calendar"></span></span>
+       <input type="text" id="court_calendar" class="form-control" value="01.11.2025" readonly="readonly" />
+	 </div>
+  </div>
+  <div class="col-xs-7">
+	  <div class="btn-group"><span class="btn btn-default sprtch active" id="sprtch_70">Korty tenisowe</span><span class="btn btn-default sprtch " id="sprtch_84">Badminton</span><span class="btn btn-default sprtch " id="sprtch_89">Boisko piłkarskie</span></div>
+  </div>
+
+  <div class="col-xs-3">
+  </div><p class="al_clear" id="sh_control">&nbsp;</p><div id="schedule_wrapp">
+    <div class="date_box" id="dbx_01112025"><div class="schedule"  id="cl_70_1">
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:30</div></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 1</strong><br />Hala<br />Sztuczna mączka<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_1_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 2</strong><br />Hala<br />Sztuczna mączka<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_2_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 3</strong><br />Hala<br />Sztuczna mączka<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:45px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:45px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:45px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:205px;padding-top:85px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_3_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 4</strong><br />Hala<br />Sztuczna mączka<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_4_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 5</strong><br />Hala<br />Twarda<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_5_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 6</strong><br />Hala<br />Twarda<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_6_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 7</strong><br />Hala<br />Twarda<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:20px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_7_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:11.25%">
+				   <div class="schedule_header clubcolor-II"><strong>kort nr 8</strong><br />Hala<br />Twarda<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:15px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_70_1_8_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div>
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:30</div></div></div><div class="al_clear"></div></div><div class="schedule" style="display:none" id="cl_84_1">
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:30</div></div></div><div class="schedule_col" style="width:22.5%">
+				   <div class="schedule_header clubcolor-II"><strong>Badminton 1</strong><br />Hala<br />Mata turniejowa<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:45px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:123px;padding-top:45px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_1_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:22.5%">
+				   <div class="schedule_header clubcolor-II"><strong>Badminton 2</strong><br />Hala<br />Mata turniejowa<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_2_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:22.5%">
+				   <div class="schedule_header clubcolor-II"><strong>Badminton 3</strong><br />Hala<br />Mata turniejowa<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:82px;padding-top:25px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_3_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div><div class="schedule_col" style="width:22.5%">
+				   <div class="schedule_header clubcolor-II"><strong>Badminton 4</strong><br />Hala<br />Mata turniejowa<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"><div class="schedule_row saved_reservation_closed reservation_closed" style="height:164px;padding-top:65px;"><span style="display: none;"><h3>niedostępne</h3></span></div></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_84_1_4_22_30"  ><span style="display:none"><h3>niedostępne</h3></span></div></div>
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:30</div></div></div><div class="al_clear"></div></div><div class="schedule" style="display:none" id="cl_89_1">
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div></div><div class="schedule_col" style="width:90%">
+				   <div class="schedule_header clubcolor-II"><strong>Boisko 90m x 45m</strong><br />Otwarte<br />Sztuczna Trawa<br /><img src="/gfx/icons/light.png" class="lighticon" alt="" /> oświetlony</div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_07_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_07_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_08_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_08_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_09_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_09_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_10_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_10_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_11_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_11_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_12_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_12_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_13_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_13_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_14_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_14_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_15_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_15_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_16_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_16_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_17_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_17_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_18_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_18_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_19_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_19_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_20_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_20_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_21_00"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_21_30"  ><span style="display:none"><h3>niedostępne</h3></span></div><div class="schedule_line"></div>
+					  <div class="schedule_row reservation_closed " id="bidi_89_1_1_22_00"  ><span style="display:none"><h3>niedostępne</h3></span></div></div>
+			  <div class="schedule_col" style="width:5%">
+			    <div class="schedule_header clubcolor-II"></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">07:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">08:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">09:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">10:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">11:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">12:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">13:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">14:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">15:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">16:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">17:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">18:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">19:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">20:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:00</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">21:30</div></div><div class="schedule_hours clubcolor-I"><div class="hourboxer">22:00</div></div></div><div class="al_clear"></div></div></div></div>
+	<p class="al_clear">&nbsp;</p><p class="al_clear">&nbsp;</p>
+  <div class="al_center">
+			<span class="label clubcolor-III labelix">&nbsp;&nbsp;</span> dostępny termin
+			&nbsp;&nbsp;&nbsp;
+			<span class="label labelix" style="background-color: #facb6e">&nbsp;&nbsp;</span> rezerwacja informacyjna
+			&nbsp;&nbsp;&nbsp;
+	    <span class="label label-closed labelix">&nbsp;&nbsp;</span> niedostepny termin</div>
+  <p class="al_clear">&nbsp;</p><h3>dodatkowe informacje</h3>
+	 <p>Odwołanie rezerwacji powinno nastąpić nie później niż na 24 godziny przed ustalonym terminem korzystania z kortów przez kontakt z Administratorem telefonicznie na numer 728-871-400, bądź droga e-mail: kontakt@blonia-sport.pl (lub przez portal Twój Tenis www.twojtenis.pl – w zakresie kortów tenisowych).<br />
+<br />
+Na kortach obowiązuje cennik podany na stronie: https://bloniasport.pl/tenis/cennik-tenis/</p>
+	 <p class="al_clear">&nbsp;</p></div><div id="make_reservation_box" class="clubcolor-I" style="display:none">
+  <div class="container">
+    <div class="col-xs-9">
+		<table class="table table-hover table-striped">
+		  <thead>
+		    <tr>
+			   <th class="clubcolor-II">data</th>
+				<th class="clubcolor-II">obiekt</th>
+				<th class="clubcolor-II">kort</th>
+				<th class="clubcolor-II">czas</th>
+			 </tr>
+		  </thead>
+		  <tbody id="sel_res_box"></tbody>
+		</table>
+	 </div>
+	 <div class="col-xs-3">
+	   <div class="al_right">
+		  <p><span class="label label-default">dokonaj rezerwacji, krok 1/2</span></p>
+		  <form action="/pl/rsv/make.html" method="POST" id="rsv_form">
+		    <input type="hidden" name="club_id" value="90" />
+			 <input type="hidden" name="type" value="corts" />
+		    <button class="button_big button_big-black clubcolor-II">przejdź dalej</button>
+		  </form>
+		</div>
+	 </div>
+	 <div class="al_clear"></div>
+  </div>
+</div>
+<div id="placekeeper" style="display:none"></div>
+	 </div>
+  </div>
+  <footer id="site_footer" class="al_clear clubcolor-II"><div class="lower_foot">
+  <div class="container"><p class="al_clear">&nbsp;</p>
+    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="footer_menu">
+	    <div class="flagbox al_left"><a href="/pl/"><img src="/www/langs/1.png" class="headflag active" /></a><a href="/en/"><img src="/www/langs/2.png" class="headflag disactive" /></a></div>
+		 <p class="al_clear">&nbsp;</p>
+		<ul><li><a href="/pl/o_nas.html">o nas</a></li><li><a href="/pl/regulamin.html">regulamin</a></li><li><a href="/pl/polityka_cookies.html">Polityka cookies</a></li><li><a href="/pl/kontakt.html">kontakt</a></li></ul>
+		<br class="al_clear"/>&copy Twój Tenis 2.0.9.4. Wszelkie prawa zastrzeżone.<br />Build 2024-04-21 23:16
+	 </div>
+	 <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 text-right 3wbox">
+	   <div class="iconbox al_right"><p><a href="https://www.facebook.com/Tw%C3%B3j-Tenis-wwwtwojtenispl-168322893231874/"><img src="/gfx/social/fb.png" /></a> <a href="https://www.instagram.com/twojtenis/"><img src="/gfx/social/inst.png" /></a></p><p><a href="https://www.kamiennakajaki.pl/" class="button_big button_big-black clubcolor-II">Kamienna Kajaki</a></p></div>
+	   <p class="al_clear">&nbsp;</p>
+		<a href="http://www.3wymiar.pl" target="_blank">framework 3wymiar <img src="/gfx/3wymiar.png" /></a>
+	 </div>
+  </div>
+</div></footer>
+  
+  
+  <script type="text/javascript" src="/js/jquery/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="/js/ui/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/js/html5/html5.js"></script>
+  <script type="text/javascript" src="/js/global.js"></script>
+  <script type="text/javascript" src="/js/template/full_page.js"></script>
+  <script type="text/javascript" src="/js/ui/minified/i18n/jquery.ui.datepicker-pl.min.js"></script>
+  <script type="text/javascript" src="/js/template/club.js"></script>
+  <script type="text/javascript" src="/js/jquery/jquery.appear.js"></script>
+  
+  
+			<div id="small_header" style="display:none">
+			  <div class="container">
+			    <div class="wrapp"><div id="sh_sp_70" class="sports" ><div id="sh_pg_70_1" class="pages" ><div class="small_schedule_header" style="width:5%">&nbsp;</div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 1</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 2</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 3</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 4</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 5</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 6</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 7</strong></div></div><div class="small_schedule_header" style="width:11.25%"><div class="clubcolor-II mhes"><strong>kort nr 8</strong></div></div></div></div><div id="sh_sp_84" class="sports" style="display:none"><div id="sh_pg_84_1" class="pages" ><div class="small_schedule_header" style="width:5%">&nbsp;</div><div class="small_schedule_header" style="width:22.5%"><div class="clubcolor-II mhes"><strong>Badminton 1</strong></div></div><div class="small_schedule_header" style="width:22.5%"><div class="clubcolor-II mhes"><strong>Badminton 2</strong></div></div><div class="small_schedule_header" style="width:22.5%"><div class="clubcolor-II mhes"><strong>Badminton 3</strong></div></div><div class="small_schedule_header" style="width:22.5%"><div class="clubcolor-II mhes"><strong>Badminton 4</strong></div></div></div></div><div id="sh_sp_89" class="sports" style="display:none"><div id="sh_pg_89_1" class="pages" ><div class="small_schedule_header" style="width:5%">&nbsp;</div><div class="small_schedule_header" style="width:90%"><div class="clubcolor-II mhes"><strong>Boisko 90m x 45m</strong></div></div></div></div></div>
+			  </div>
+			</div>
+  <div id="dialog_del_rsv" style="display:none">
+    Czy na pewno chcesz anulować rezerwację?
+	 <hr />
+	 <span class="btn btn-default" id="close_dialog_del">anuluj</span>
+	 <a href="#" class="btn btn-danger al_right" id="confirm_del">potwierdzam</a>
+  </div>
+
+  <div id="dialog_excel_rsv" style="display:none">
+    <div class="alerts"></div>
+    <form action="/getfile.xls?lang=pl&type=schedule" method="POST" class="form-horizontal">
+	   <span class="ui-helper-hidden-accessible"><input type="text"/></span>
+      <div class="form-group">
+        <label for="xls_date_from" class="col-sm-2 control-label">od</label>
+        <div class="col-sm-4 nopadding">
+          <input type="text" name="date_from" class="form-control" id="xls_date_from" value="01.11.2025" />
+        </div>
+        <label for="xls_date_to" class="col-sm-2 control-label">do</label>
+        <div class="col-sm-4 nopadding">
+          <input type="text" name="date_to" class="form-control" id="xls_date_to" value="01.11.2025" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">obiekt</label>
+        <div class="col-sm-10 nopadding"><div class="checkbox"><label><input type="checkbox" name="sport_70" value="1" /> Korty tenisowe</label></div><div class="checkbox"><label><input type="checkbox" name="sport_84" value="1" /> Badminton</label></div><div class="checkbox"><label><input type="checkbox" name="sport_89" value="1" /> Boisko piłkarskie</label></div></div>
+      </div>
+
+	   <hr />
+	   <span class="btn btn-default close_dialog_excel_rsv">anuluj</span>
+	   <span class="btn btn-success al_right" id="confirm_dialog_excel_rsv">
+		  <span class="ajax_loader" style="display:none"><img src="/gfx/ajax/loader-6.gif" /></span>
+		  <span class="ajax_content">potwierdzam</span>
+		</span>
+	 </form>
+  </div>
+<script type="text/javascript">
+var load_lang = 'pl';
+var today_date = '01.11.2025';
+var club_url = 'blonia_sport';
+var club_graph_type = 'half';
+var res_trns = new Object();
+res_trns.godzina = 'godzina';
+res_trns.godziny = 'godziny';
+res_trns.godzin = 'godzin';
+res_trns.dzisiaj = 'dzisiaj';
+res_trns.pol_godziny = 'pół godziny';
+res_trns.rezerwuj = 'rezerwuj';
+res_trns.wybrano = 'wybrano';
+res_trns.szczegoly_rezerwacji = 'szczegóły rezerwacji';
+res_trns.del_title = 'Anuluj rezerwację';
+res_trns.xls_title = 'pobierz plik XLS';
+</script>
+<div class="ajax_loader_box" style="display:none"><div class="ajax_box-1"><img src="/gfx/ajax/loader-1.gif" alt="" /><br />wczytywanie proszę czekać...</div></div>
+<script type="text/javascript">$(document).ready(function(){startTimer(3600, $("#ses_counter"));});</script></body></html>

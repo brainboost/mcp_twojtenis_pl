@@ -1,56 +1,143 @@
 [
   {
     "id": "blonia_sport",
+    "num": 90,
     "name": "Błonia Sport",
     "address": "al. 3 Maja 57",
-    "phone": "+48728871400"
+    "phone": "+48728871400",
+    "sports": [
+      {
+        "id": 70,
+        "name": "Korty tenisowe"
+      },
+      {
+        "id": 84,
+        "name": "Badminton"
+      },
+      {
+        "id": 89,
+        "name": "Boisko piłkarskie"
+      }
+    ]
   },
   {
     "id": "ks_nadwislan_krakow",
+    "num": 41,
     "name": "KS Nadwiślan Kraków",
     "address": "ul. Koletek 20",
-    "phone": "+48507361282"
+    "phone": "+48507361282",
+    "sports": [
+      {
+        "id": 2,
+        "name": "Hala Tenisowa"
+      },
+      {
+        "id": 65,
+        "name": "Korty Otwarte"
+      }
+    ]
   },
   {
     "id": "krakowska_szkola_tenisa_tenis24",
+    "num": 36,
     "name": "Krakowska Szkoła Tenisa TENIS24",
     "address": "Ptaszyckiego 4",
-    "phone": "+48126431220"
+    "phone": "+48126431220",
+    "sports": [
+      {
+        "id": 1,
+        "name": "Korty Tenisowe"
+      }
+    ]
   },
   {
     "id": "forehand_krakowska_szkola_tenisa",
+    "num": 11,
     "name": "Forehand Krakowska Akademia Tenisa",
     "address": "Strzelców 15A",
-    "phone": "+48796760567"
+    "phone": "+48796760567",
+    "sports": [
+      {
+        "id": 1,
+        "name": "Korty Tenisowe"
+      }
+    ]
   },
   {
     "id": "katenis__korty_olsza",
+    "num": 76,
     "name": "KATenis - korty Olsza",
     "address": "Michała Siedleckiego 7",
-    "phone": "+48796760567"
+    "phone": "+48796760567",
+    "sports": [
+      {
+        "id": 17,
+        "name": "Korty tenisowe"
+      }
+    ]
   },
   {
     "id": "korty_dabskie",
+    "num": 44,
     "name": "Korty Dąbskie",
     "address": "Dąbska 1",
-    "phone": "+48500210614"
+    "phone": "+48500210614",
+    "sports": [
+      {
+        "id": 1,
+        "name": "Korty Tenisowe"
+      }
+    ]
   },
   {
     "id": "wks_wawel",
+    "num": 71,
     "name": "WKS Wawel",
     "address": "ul. Podchorążych 3",
-    "phone": "+48533343323"
+    "phone": "+48533343323",
+    "sports": [
+      {
+        "id": 42,
+        "name": "Korty tenisowe"
+      }
+    ]
   },
   {
     "id": "klub_tenisowy_blonia_krakow",
+    "num": 12,
     "name": "Klub Tenisowy Błonia Kraków",
     "address": "ul. Na Błoniach 1",
-    "phone": "+48500210614"
+    "phone": "+48500210614",
+    "sports": [
+      {
+        "id": 1,
+        "name": "Korty Tenisowe"
+      },
+      {
+        "id": 54,
+        "name": "Ścianka"
+      }
+    ]
   },
   {
     "id": "centrum_sportowe_czyzyny",
+    "num": 16,
     "name": "Centrum Sportowe Czyżyny",
     "address": "Jana Pawła II 37",
-    "phone": "+48126283620"
+    "phone": "+48126283620",
+    "sports": [
+      {
+        "id": 12,
+        "name": "Tenis I Squash"
+      },
+      {
+        "id": 28,
+        "name": "Pozostałe"
+      },
+      {
+        "id": 72,
+        "name": "Nowa Hala Tenisowa"
+      }
+    ]
   }
 ]

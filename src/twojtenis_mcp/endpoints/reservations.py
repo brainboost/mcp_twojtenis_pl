@@ -3,10 +3,10 @@
 import logging
 from typing import Any
 
-from ..auth import session_manager
-from ..client import TwojTenisClient, with_session_retry
+from ..client import TwojTenisClient
 from ..models import ApiErrorException
 from ..schedule_parser import ScheduleParser
+from ..utils import validate_date, validate_time
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +25,16 @@ class ReservationsEndpoint:
             List of reservation dictionaries
         """
         try:
-            html_content = await with_session_retry(
+            html_content = await self.client.with_session_retry(
                 self.client.get_reservations,
-                session_manager,
             )
             if not html_content:
                 logger.warning("No reservation data received")
                 return []
 
-            # Parse reservations from HTML
             reservations = ScheduleParser.parse_reservations(html_content)
-
-            # Convert to dictionaries and add user_id
             result = []
-            for reservation in reservations:
-                reservation["user_id"] = (await session_manager.get_session()).phpsessid
+            for reservation in reservations:  # type: ignore
                 result.append(reservation)
 
             logger.info(f"Retrieved {len(result)} reservations")
@@ -52,61 +47,114 @@ class ReservationsEndpoint:
             logger.error(f"Unexpected error getting reservations: {e}")
             return []
 
+    async def get_reservation_details(self, booking_id: str) -> dict[str, Any]:
+        booking_info = {}
+        try:
+            # with retry logic
+            booking_info = await self.client.with_session_retry(
+                self.client.get_reservation,
+                booking_id=booking_id,
+            )
+
+            if booking_info:
+                reservation = ScheduleParser.parse_reservation(booking_info)
+                logger.info(f"Get details for reservation {booking_id} succeeded")
+                if reservation:
+                    return {
+                        "success": True,
+                        "message": f"Getting details for reservation {booking_id}",
+                        "reservation": {
+                            "booking_id": booking_id,
+                            "club_id": reservation["club_id"],
+                            "club_name": reservation["club_name"],
+                            "club_num": reservation["club_num"],
+                            "sport": reservation["sport"],
+                            "court": reservation["court"],
+                            "details": reservation["details"],
+                            "date": reservation["date"],
+                            "time": reservation["time"],
+                            "cancel_till": reservation["cancel_till"],
+                            "price": reservation["price"],
+                            "pay_till": reservation["pay_till"],
+                        },
+                    }
+
+            return {
+                "success": False,
+                "message": f"Failed to get reservation {booking_id} details.",
+            }
+
+        except ApiErrorException as e:
+            logger.error(f"API error making reservation: {e.message}")
+            return {
+                "success": False,
+                "message": f"Get details for reservation {booking_id} failed: {e.message}",
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error getting reservation details: {e}")
+            return {"success": False, "message": f"Unexpected error: {str(e)}"}
+
     async def make_reservation(
-        self, club_id: str, court_number: int, date: str, hour: str, sport_id: int
+        self,
+        club_num: int,
+        court_number: int,
+        date: str,
+        start_time: str,
+        end_time: str,
+        sport_id: int,
     ) -> dict[str, Any]:
         """Make a court reservation.
 
         Args:
-            club_id: Club identifier
-            court_number: Court number
+            club_num: Club number
+            court_number: Court number, from 1
             date: Date in DD.MM.YYYY format
-            hour: Hour in HH:MM format
+            start_time: Start time in HH:MM format
+            end_time: End time in HH:MM format
             sport_id: Sport identifier
 
         Returns:
             Result dictionary with success status and message
         """
+        if not validate_date(date):
+            return {
+                "success": False,
+                "message": "Invalid date format. Use DD.MM.YYYY format.",
+            }
+
+        if not validate_time(start_time) or not validate_time(end_time):
+            return {
+                "success": False,
+                "message": "Invalid time format. Use HH:MM format.",
+            }
+
         try:
-            # Validate date format
-            if not self._validate_date(date):
-                return {
-                    "success": False,
-                    "message": "Invalid date format. Use DD.MM.YYYY format.",
-                }
-
-            # Validate time format
-            if not self._validate_time(hour):
-                return {
-                    "success": False,
-                    "message": "Invalid time format. Use HH:MM format.",
-                }
-
-            # Make reservation with retry logic
-            success = await with_session_retry(
+            # with retry logic
+            booking_id = await self.client.with_session_retry(
                 self.client.make_reservation,
-                session_manager,
-                club_id=club_id,
+                club_num=club_num,
                 sport_id=sport_id,
                 court_number=court_number,
                 date=date,
-                hour=hour,
+                start_time=start_time,
+                end_time=end_time,
             )
 
-            if success:
+            if booking_id:
                 logger.info(
-                    f"Reservation made successfully: {club_id}, court {court_number}, {date} {hour}"
+                    f"Reservation {booking_id} made successfully: #{club_num}, court {court_number}, {date} from {start_time} to {end_time}"
                 )
-                session = await session_manager.get_session()
+                # session = await session_manager.get_session()
                 return {
                     "success": True,
-                    "message": f"Reservation made for court {court_number} on {date} at {hour}",
+                    "message": f"Reservation made for court {court_number} on {date} from {start_time} to {end_time}",
                     "reservation": {
-                        "user_id": session.phpsessid if session else "unknown",
-                        "club_id": club_id,
+                        "booking_id": booking_id,
+                        "club_num": club_num,
                         "court_number": court_number,
                         "date": date,
-                        "hour": hour,
+                        "start_time": start_time,
+                        "end_time": end_time,
                         "sport_id": sport_id,
                     },
                 }
@@ -123,145 +171,48 @@ class ReservationsEndpoint:
             logger.error(f"Unexpected error making reservation: {e}")
             return {"success": False, "message": f"Unexpected error: {str(e)}"}
 
-    async def delete_reservation(
-        self, club_id: str, court_number: int, date: str, hour: str
-    ) -> dict[str, Any]:
+    async def delete_reservation(self, booking_id: str) -> dict[str, Any]:
         """Delete a court reservation.
 
         Args:
-            club_id: Club identifier
-            court_number: Court number
-            date: Date in DD.MM.YYYY format
-            hour: Hour in HH:MM format
+            booking_id: Reservation identifier
 
         Returns:
             Result dictionary with success status and message
         """
+        success = False
+
         try:
-            # Validate date format
-            if not self._validate_date(date):
-                return {
-                    "success": False,
-                    "message": "Invalid date format. Use DD.MM.YYYY format.",
-                }
-
-            # Validate time format
-            if not self._validate_time(hour):
-                return {
-                    "success": False,
-                    "message": "Invalid time format. Use HH:MM format.",
-                }
-
-            # For deletion, we need to determine the sport_id
-            # This is a limitation - we might need to query the reservation first
-            # For now, we'll try both sports or use a default
-            sport_ids = [84, 70]  # badminton, tennis
-
-            success = False
-            last_exception = None
-            
-            for sport_id in sport_ids:
-                try:
-                    success = await with_session_retry(
-                        self.client.delete_reservation,
-                        session_manager,
-                        club_id=club_id,
-                        sport_id=sport_id,
-                        court_number=court_number,
-                        date=date,
-                        hour=hour,
-                    )
-                    if success:
-                        break
-                except ApiErrorException as e:
-                    last_exception = e
-                    continue
-
+            success = await self.client.with_session_retry(
+                self.client.delete_reservation,
+                booking_id=booking_id,
+            )
             if success:
-                logger.info(
-                    f"Reservation deleted successfully: {club_id}, court {court_number}, {date} {hour}"
-                )
+                msg = f"Reservation deleted successfully: {booking_id}"
+                logger.info(msg=msg)
                 return {
                     "success": True,
-                    "message": f"Reservation deleted for court {court_number} on {date} at {hour}",
+                    "message": msg,
                 }
             else:
-                error_msg = "Failed to delete reservation. The reservation might not exist."
-                if last_exception:
-                    error_msg = f"Deletion failed: {last_exception.message}"
+                msg = f"Failed to delete reservation {booking_id}. The reservation might not exist."
+                logger.error(msg=msg)
                 return {
                     "success": False,
-                    "message": error_msg,
+                    "message": msg,
                 }
-
         except ApiErrorException as e:
             logger.error(f"API error deleting reservation: {e.message}")
-            return {"success": False, "message": f"Deletion failed: {e.message}"}
+            return {
+                "success": False,
+                "message": f"Reservation {booking_id} deletion failed: {e.message}",
+            }
         except Exception as e:
             logger.error(f"Unexpected error deleting reservation: {e}")
-            return {"success": False, "message": f"Unexpected error: {str(e)}"}
-
-    def _validate_date(self, date: str) -> bool:
-        """Validate date format (DD.MM.YYYY).
-
-        Args:
-            date: Date string to validate
-
-        Returns:
-            True if valid, False otherwise
-        """
-        try:
-            import re
-
-            if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", date):
-                return False
-
-            day, month, year = map(int, date.split("."))
-
-            # Basic validation
-            if not (1 <= day <= 31):
-                return False
-            if not (1 <= month <= 12):
-                return False
-            if not (2020 <= year <= 2030):  # Reasonable year range
-                return False
-
-            return True
-
-        except (ValueError, AttributeError):
-            return False
-
-    def _validate_time(self, time: str) -> bool:
-        """Validate time format (HH:MM).
-
-        Args:
-            time: Time string to validate
-
-        Returns:
-            True if valid, False otherwise
-        """
-        try:
-            import re
-
-            if not re.match(r"^\d{2}:\d{2}$", time):
-                return False
-
-            hour, minute = map(int, time.split(":"))
-
-            # Basic validation
-            if not (0 <= hour <= 23):
-                return False
-            if not (0 <= minute <= 59):
-                return False
-
-            # Check if it's a valid slot (usually on the hour or half hour)
-            if minute not in [0, 30]:
-                return False
-
-            return True
-
-        except (ValueError, AttributeError):
-            return False
+            return {
+                "success": False,
+                "message": f"Reservation {booking_id} deletion failed. Unexpected error: {str(e)}",
+            }
 
 
 # Global reservations endpoint instance

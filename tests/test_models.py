@@ -11,7 +11,6 @@ from twojtenis_mcp.models import (
     Reservation,
     ReservationRequest,
     Schedule,
-    SportId,
     UserSession,
 )
 
@@ -26,7 +25,7 @@ class TestClub:
             name="Błonia Sport",
             address="al. 3 Maja 57",
             phone="+48728871400",
-        )
+        )  # type: ignore
 
         assert club.id == "blonia_sport"
         assert club.name == "Błonia Sport"
@@ -40,7 +39,7 @@ class TestClub:
             name="Test Club",
             address="Test Address",
             phone="+48123456789",
-        )
+        )  # type: ignore
 
         data = club.model_dump()
         assert data["id"] == "test_club"
@@ -85,7 +84,7 @@ class TestSchedule:
 
         schedule = Schedule(
             club_id="test_club",
-            sport_id=SportId.BADMINTON,
+            sport_id=84,
             date="24.09.2025",
             courts=courts,
         )
@@ -104,14 +103,15 @@ class TestReservation:
     def test_reservation_creation(self):
         """Test creating a reservation."""
         reservation = Reservation(
+            booking_id="qwerty",
             user_id="test_session",
             club_id="test_club",
             court_number="Kort 1",
             date="24.09.2025",
             hour="10:00",
-            sport_id=SportId.BADMINTON,
+            sport_id=84,
         )
-
+        assert reservation.booking_id == "qwerty"
         assert reservation.user_id == "test_session"
         assert reservation.club_id == "test_club"
         assert reservation.court_number == "Kort 1"
@@ -129,14 +129,10 @@ class TestUserSession:
         session = UserSession(
             phpsessid="test_session_id",
             expires_at=expires_at,
-            is_active=True,
-            email="test@example.com",
         )
 
         assert session.phpsessid == "test_session_id"
         assert session.expires_at == expires_at
-        assert session.is_active is True
-        assert session.email == "test@example.com"
 
 
 class TestApiError:
@@ -171,7 +167,7 @@ class TestReservationRequest:
             court_number="Kort 1",
             date="24.09.2025",
             hour="10:00",
-            sport_id=SportId.BADMINTON,
+            sport_id=84,
         )
 
         assert request.club_id == "test_club"

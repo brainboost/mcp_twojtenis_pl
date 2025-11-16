@@ -1,11 +1,14 @@
 """Schedule parsing utilities for TwojTenis MCP server."""
 
-import json
 import logging
+import re
+from typing import Any
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
-from .models import Schedule, SportId
+from twojtenis_mcp.models import ApiErrorException
+
+from .utils import extract_id_from_url
 
 logger = logging.getLogger(__name__)
 
@@ -14,131 +17,10 @@ class ScheduleParser:
     """Parser for court schedule data from TwojTenis.pl."""
 
     @staticmethod
-    def parse_schedule(
-        json_str: str,
-        club_id: str,
-        sport_id: int,
-        date: str,
-        sport_name: str,
-    ) -> Schedule | None:
+    def parse_schedules(html: str) -> list | None:
         """
-        Parses a JSON string containing an HTML 'schedule' field and returns
-        a list of courts with half‐hour availability.
-
-        Args:
-            json_str (str): JSON document as a string.
-            club_id (str): Club identifier
-            sport_id (int): Sport identifier
-            date (str): Date in DD.MM.YYYY format
-            sport_name (str): Name of sport to filter for
-
-        Returns:
-            Schedule object with courts and their availability
-        """
-        data = json.loads(json_str)
-        html = data.get("schedule")
-        if not html:
-            raise ValueError("Missing 'schedule' field in JSON")
-
-        soup = BeautifulSoup(html, "html.parser")
-
-        # 1. Locate the schedule block for the specified sport
-        sport_div = None
-        for sched in soup.find_all("div", class_="schedule"):
-            # Check if this schedule contains the sport we're looking for
-            # Look for any strong tag that contains the sport name
-            headers = sched.find_all("strong")
-            for header in headers:
-                header_text = header.get_text().strip().lower()
-                # Check if sport name is in header text or if header text contains sport name
-                if (
-                    sport_name.lower() in header_text
-                    or header_text in sport_name.lower()
-                ):
-                    sport_div = sched
-                    break
-            if sport_div:
-                break
-
-        if sport_div is None:
-            raise RuntimeError(f"{sport_name.capitalize()} schedule not found in HTML")
-
-        cols = sport_div.find_all("div", class_="schedule_col")
-
-        # 2. Extract the time axis from the first column
-        time_col = cols[0]
-        times = [
-            elem.get_text().strip()
-            for elem in time_col.find_all("div", class_="hourboxer")
-        ]
-
-        courts = []
-        # 3. Middle columns represent each court; last column is a mirror of the times
-        # Handle both cases: with and without the last mirror column
-        court_cols = cols[1:-1] if len(cols) > 2 else cols[1:]
-
-        for col in court_cols:
-            # Court header: e.g. "Badminton 1", "Hala 1", etc.
-            header = col.find("strong")
-            if not header:
-                continue
-            name = header.get_text().strip()
-
-            # Use the full court name instead of just the number
-            court_name = name
-
-            # Each time slot should have a corresponding row or schedule_row element
-            availability = {}
-
-            # Get all the schedule_row elements in the column
-            _schedule_rows = col.find_all("div", class_="schedule_row")
-
-            # Now process each time slot
-            for i, time_slot in enumerate(times):
-                # Default to available
-                available = True
-
-                # Find the schedule_row element for this time slot
-                # The ID pattern is: bidi_{club_id}_{court_index}_{hour}_{minute}
-                target_id = f"bidi_84_1_1_{i // 2:02d}_{(i % 2) * 30:02d}"
-                target_row = col.find("div", id=target_id)
-
-                if target_row:
-                    # Check if this row has the reservation_closed class directly
-                    if "reservation_closed" in target_row.get("class", []):  # type: ignore
-                        available = False
-                    else:
-                        # Check if any child element has the 'reservation_closed' class
-                        child_elements = target_row.find_all()
-                        is_closed = False
-                        for child in child_elements:
-                            if child.has_attr("class"):
-                                classes = child.get("class")
-                                if (
-                                    isinstance(classes, list)
-                                    and "reservation_closed" in classes
-                                ):
-                                    is_closed = True
-                                    break
-                        # 'reservation_bg' ⇒ available, 'reservation_closed' ⇒ occupied
-                        available = not is_closed
-                else:
-                    # If we couldn't find the matching element, assume not available
-                    available = False
-
-                availability[time_slot] = available
-
-            courts.append({"number": court_name, "availability": availability})
-
-        return Schedule(
-            club_id=club_id, sport_id=SportId(sport_id), date=date, courts=courts
-        )
-
-    @staticmethod
-    def parse_schedules(json_str: str) -> list | None:
-        """
-        Parses a JSON string containing an HTML 'schedule' field and returns
-        a list of courts with half/hour availability window.
+        Parses an HTML 'schedule' block and returns data with
+        a collection of courts with 30m availability term, combined by sports.
 
         Args:
             json_str (str): JSON document as a string.
@@ -146,39 +28,173 @@ class ScheduleParser:
         Returns:
             list of dict: [
                 {
-                "sport": int,
-                "data: {
-                        "number": str,
-                        "availability": {
-                            "07:00": bool,
-                            "07:30": bool,
-                            ...,
-                            "22:30": bool
-                        }
+                    "sport": int,
+                    "data: {
+                            "number": str,
+                            "availability": {
+                                "07:00": bool,
+                                "07:30": bool,
+                                ...,
+                                "22:30": bool
+                            }
                     }
                 }, ...
             ]
+            On missing schedule data returns None
         """
-        data = json.loads(json_str)
-        html = data.get("schedule")
         if not html:
-            raise ValueError("Missing 'schedule' field in JSON")
+            return None
 
         soup = BeautifulSoup(html, "html.parser")
         schedule_list: list = []
 
-        # Locate a schedule block
+        # locate a schedule block
         for sched in soup.find_all("div", class_="schedule"):
             sport = ScheduleParser.get_sport_from_id(str(sched["id"]))
             cols = sched.find_all("div", class_="schedule_col")
-            courts = ScheduleParser.extract_table_data(cols)
+            courts = ScheduleParser._extract_schedule_table(cols)
             schedule_list.append({"sport": sport, "data": courts})
 
         return schedule_list
 
     @staticmethod
-    def extract_table_data(cols):
-        # Extract the time axis from the first column
+    def parse_club_info(html: str) -> dict[str, Any] | None:
+        """
+        Parses an HTML club info page and returns data as dictionary.
+
+        Args:
+            json_str (str): JSON document as a string.
+
+        On missing html returns None
+        """
+        if not html:
+            return None
+
+        soup = BeautifulSoup(html, "html.parser")
+        sport_list: list = []
+        # parse sports list
+        well = soup.find("div", class_="well")
+        if well is None:
+            raise ApiErrorException(
+                code="NO_SESSION",
+                message="No active session available. HTML parsing error. No div 'well'",
+            )
+
+        btn_group = well.find("div", class_="btn-group")
+        if btn_group is None:
+            raise Exception("HTML parsing error. No 'btn_group' div")
+        for sprtch in btn_group.find_all("span", class_="sprtch"):
+            sport_id = ScheduleParser.get_sport_from_id(str(sprtch["id"]))
+            sport_name = sprtch.text
+            sport_list.append({"id": sport_id, "name": sport_name})
+        # parse working hours
+        times = []
+        sched = soup.find("div", class_="schedule")
+        if sched is not None:
+            col = sched.find("div", class_="schedule_col")
+            if col is not None:
+                times = [
+                    elem.get_text().strip()
+                    for elem in col.find_all("div", class_="hourboxer")
+                ]
+        return {"sports": sport_list, "times": times}
+
+    @staticmethod
+    def parse_reservations(input: str) -> list[dict[str, Any]] | None:
+        if not input:
+            return None
+
+        soup = BeautifulSoup(input, "html.parser")
+        resrvations: list = []
+        dashboard = soup.find("div", id="dashboard_content")
+        if dashboard is None:
+            raise ApiErrorException(
+                code="NO_SESSION",
+                message="No active session available. HTML parsing error. No div 'dashboard_content'",
+            )
+
+        for box in dashboard.find_all("div", class_="rsv_box"):
+            link = box.find("a").attrs["href"]  # type: ignore
+            booking_id = extract_id_from_url(link)  # type: ignore
+
+            date_time = box.find("p", class_="al_center").get_text("_")  # type: ignore
+            date, time = date_time.split("_", 2)
+
+            club_img = box.find("img").attrs["src"]  # type: ignore
+            club_no = extract_id_from_url(club_img)  # type: ignore
+
+            name = box.find("h3", class_="al_center").text  # type: ignore
+            resrvations.append(
+                {
+                    "booking_id": booking_id,
+                    "date": date.strip(),
+                    "time": time.strip(),
+                    "club_num": club_no,
+                    "club_name": name.strip(),
+                }
+            )
+
+        return resrvations
+
+    @staticmethod
+    def parse_reservation(input: str) -> dict[str, Any] | None:
+        if not input:
+            return None
+
+        soup = BeautifulSoup(input, "html.parser")
+
+        container = soup.find("div", id="site_content")
+        if container is None:
+            raise ApiErrorException(
+                code="NO_SESSION",
+                message="No active session available. HTML parsing error. No div 'site_content'",
+            )
+
+        # <div id="site_breadcrumbs" class="al_clear">
+        for box in container.find_all("div", id="site_breadcrumbs"):
+            links = box.find_all("a")
+            club_id = extract_id_from_url(links[-2].attrs["href"])  # type: ignore
+            club_name = links[-2].text  # type: ignore
+
+        # <div class="well well-rsv well-full">
+        well = container.find("div", class_="well-full")
+        club_img = well.find("img", class_="club_emblem").attrs["src"]  # type: ignore
+        club_num = extract_id_from_url(club_img)  # type: ignore
+
+        tables = container.find_all("table", class_="table-rsv")
+        # 0 - reservation table
+        tr = tables[0].find("tbody").find("tr")  # type: ignore
+        rows = tr.find_all("td")  # type: ignore
+        date = rows[0].text.strip()
+        time = rows[1].text.strip()
+        labels_text = rows[2].get_text(separator=",").strip()
+        cancel_dt = rows[3].text  # type: ignore
+        labels = labels_text.replace(" ", "").replace("\n", " ").split(",", 3)
+        sport = labels[0].strip()
+        court = labels[2].strip()
+        details = labels[-1].replace(",", " ").strip()
+        # 1 - payments table
+        tds = tables[1].find("tbody").find("tr").find_all("td")  # type: ignore
+        pay_till = tds[-2].text
+        price = tds[-1].text
+
+        return {
+            "club_id": club_id,  # type: ignore
+            "club_name": club_name,  # type: ignore
+            "club_num": club_num,
+            "sport": sport,
+            "court": court,
+            "details": details,
+            "date": date,
+            "time": time,
+            "cancel_till": cancel_dt,
+            "price": price,
+            "pay_till": pay_till,
+        }
+
+    @staticmethod
+    def _extract_schedule_table(cols: list[Tag]):
+        """Extract the time axis from the first column"""
         time_col = cols[0]
         times = [
             elem.get_text().strip()
@@ -193,17 +209,33 @@ class ScheduleParser:
             if not header:
                 continue
             name = header.get_text().strip()
-
             # Each .schedule_line corresponds to one timeslot, in the same order as `times`
-            # but we need to skip 1st line bc a header also has .schedule_line
             rows = col.find_all("div", class_="schedule_line")
             availability = {}
-            for t, row in zip(times, rows[1:], strict=False):
+            for t, row in zip(times, rows, strict=False):
                 # look for .reservation_closed in all children
-                is_closed = row.find_all(attrs={"class": "reservation_closed"}, limit=1)
-                availability[t] = not is_closed
+                closed_cells = row.find_all(
+                    attrs={"class": "reservation_closed"}, limit=1
+                )
+                has_closed_class = len(closed_cells) != 0
+                if has_closed_class and closed_cells[0].get("style"):
+                    style = closed_cells[0].get("style")
+                    height_match = re.search(r"height:\s*(\d+)px", style)  # type: ignore
+                    if height_match:
+                        height = int(height_match.group(1))
+                        closed_heigth = int(height / 41)
+                        availability[t] = closed_heigth
+                        continue
+                availability[t] = 0
 
-            courts.append({"number": name, "availability": availability})
+            courts.append(
+                {
+                    "number": name,
+                    "availability": ScheduleParser._translate_availability(
+                        availability
+                    ),
+                }
+            )
         return courts
 
     @staticmethod
@@ -218,94 +250,34 @@ class ScheduleParser:
         """
         return id_str.split("_", maxsplit=2)[1]
 
-    # Class constant for sport names mapping - defined once at class level
-    _SPORT_NAMES = {
-        SportId.BADMINTON.value: "badminton",
-        SportId.TENNIS.value: "tennis",
-        SportId.TENNIS_SQUASH.value: "tennis_squash",
-    }
-
-    @classmethod
-    def get_sport_name_by_id(cls, sport_id: int) -> str:
-        """Get sport name by sport ID.
-
-        Args:
-            sport_id: Sport identifier
-
-        Returns:
-            Sport name
-
-        Raises:
-            ValueError: If sport_id is not a positive integer
-        """
-        # Validate input
-        if not isinstance(sport_id, int) or sport_id <= 0:
-            raise ValueError(
-                f"Invalid sport_id: {sport_id}. Must be a positive integer."
-            )
-
-        # Use the class constant for better performance and maintainability
-        return cls._SPORT_NAMES.get(sport_id, f"sport_{sport_id}")
-
-    @classmethod
-    def is_valid_sport_id(cls, sport_id: int) -> bool:
-        """Check if a sport ID is valid and supported.
-
-        Args:
-            sport_id: Sport identifier to validate
-
-        Returns:
-            True if the sport ID is valid and supported, False otherwise
-        """
-        try:
-            if not isinstance(sport_id, int) or sport_id <= 0:
-                return False
-            return sport_id in cls._SPORT_NAMES
-        except Exception:
-            return False
-
-    @classmethod
-    def get_all_supported_sports(cls) -> dict[int, str]:
-        """Get all supported sport IDs and their names.
-
-        Returns:
-            Dictionary mapping sport IDs to sport names
-        """
-        return cls._SPORT_NAMES.copy()
-
     @staticmethod
-    def parse_reservations(html_content: str) -> list[dict]:
-        """Parse reservations from HTML response.
+    def _translate_availability(input: dict[str, int]) -> dict[str, bool]:
+        """
+        Translates availability codes to boolean values.
+
+        - 0 means True (available)
+        - n > 0 means False for this slot and the next n-1 slots
 
         Args:
-            html_content: HTML content containing reservations
+            input: Dictionary mapping time slots to availability codes
 
         Returns:
-            List of reservation dictionaries
+            Dictionary mapping time slots to boolean availability
         """
-        try:
-            soup = BeautifulSoup(html_content, "html.parser")
-            reservations = []
+        result = {}
+        skip_count = 0
 
-            # This is a placeholder implementation
-            # The actual parsing would depend on the HTML structure of the reservations page
-            reservation_elements = soup.find_all("div", class_="reservation")
+        for key, value in input.items():
+            if skip_count > 0:
+                # We're in a "skip" period from a previous non-zero value
+                result[key] = False
+                skip_count -= 1
+            elif value == 0:
+                # 0 means available
+                result[key] = True
+            else:
+                # Positive number: this slot is False, plus next (value-1) slots
+                result[key] = False
+                skip_count = value - 1
 
-            for _element in reservation_elements:
-                # Extract reservation details
-                # This would need to be adapted to the actual HTML structure
-                reservation = {
-                    "club_id": "",
-                    "court_number": 0,
-                    "date": "",
-                    "hour": "",
-                    "sport_id": 0,
-                }
-                reservations.append(reservation)
-
-            logger.info(f"Parsed {len(reservations)} reservations")
-            return reservations
-
-        except Exception as e:
-            logger.error(f"Error parsing reservations: {e}")
-            return []
+        return result

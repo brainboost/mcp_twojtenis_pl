@@ -55,12 +55,10 @@ TWOJTENIS_PASSWORD=your_password
 
 # Optional
 TWOJTENIS_CONFIG_PATH=config/config.json
-TWOJTENIS_SESSION_FILE=config/session.json
 TWOJTENIS_CLUBS_FILE=config/clubs.json
 TWOJTENIS_BASE_URL=https://www.twojtenis.pl
-TWOJTENIS_SESSION_REFRESH=60
-TWOJTENIS_SESSION_LIFETIME=120
-TWOJTENIS_REQUEST_TIMEOUT=30
+TWOJTENIS_SESSION_LIFETIME=120  # minutes
+TWOJTENIS_REQUEST_TIMEOUT=30    
 TWOJTENIS_RETRY_ATTEMPTS=3
 TWOJTENIS_RETRY_DELAY=1.0
 ```
@@ -92,15 +90,14 @@ uv run -m twojtenis_mcp.server
 
 The server provides the following MCP tools:
 
-1. **login(email, password)** - Authenticate with TwojTenis.pl
-2. **get_clubs()** - Get list of available clubs
-3. **get_sports()** - Get list of supported sports
-4. **get_club_schedule(club_id, sport_id, date)** - Get court availability schedule
-5. **get_reservations()** - Get user's current reservations
-6. **put_reservation(club_id, court_number, date, hour, sport_id)** - Make a reservation
-7. **delete_reservation(club_id, court_number, date, hour)** - Delete a reservation
-8. **check_availability(club_id, sport_id, court_number, date, hour)** - Check court availability
-9. **get_available_slots(club_id, sport_id, date, court_number)** - Get all available slots
+ **get_all_clubs()** - Get list of all available clubs
+ **get_all_sports()** - Get list of all supported sport IDs
+ **get_club_schedule(club_id, sport_id, date)** - Get court availability schedule
+ **get_reservations()** - Get user's current reservations
+ **put_reservation(club_id, court_number, date, hour, sport_id)** - Make a reservation
+ **delete_reservation(club_id, court_number, date, hour)** - Delete a reservation
+ **check_availability(club_id, sport_id, court_number, date, hour)** - Check court availability
+ **get_available_slots(club_id, sport_id, date, court_number)** - Get all available slots
 
 
 ### Testing with MCP Inspector
@@ -257,6 +254,12 @@ src/twojtenis_mcp/
 uv run pytest tests/
 ```
 
+MCP Inspedtor allows you to debug and test server. Run from project folder in terminal:
+
+```bash
+npx @modelcontextprotocol/inspector uv run python -m twojtenis_mcp.server
+```
+
 ### Code Formatting
 
 ```bash
@@ -281,7 +284,6 @@ The server provides detailed logging. Check the console output for error message
 If you encounter session issues:
 1. Delete `config/session.json`
 2. Restart the server
-3. Re-authenticate using the `login` tool
 
 ## Contributing
 
