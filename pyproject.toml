@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "sse-starlette>=1.6.0",
     "brotli>=1.1.0",
+    "asyncio>=4.0.0",
 ]
 
 [project.scripts]
@@ -38,7 +39,8 @@ ignore = ["E501", "B008"]
 dev = [
     "debugpy>=1.8.17",
     "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
+    "anyio>=4.11.0",
+    "pytest-asyncio>=1.2.0",
     "pytest-mock>=3.14.0",
     "ruff>=0.5.0",
 ]

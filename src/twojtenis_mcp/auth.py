@@ -59,8 +59,16 @@ class SessionManager:
 
     async def save_session(self, session_id: str) -> None:
         """Save current session to file."""
+        await self.save_external_session(session_id)
+
+    async def save_external_session(self, phpsessid: str) -> None:
+        """Save externally obtained session ID.
+
+        Args:
+            phpsessid: PHP session ID obtained from external authentication
+        """
         self._session = UserSession(
-            phpsessid=session_id,
+            phpsessid=phpsessid,
             expires_at=datetime.now(UTC) + timedelta(minutes=config.session_lifetime),
         )
         try:
@@ -72,10 +80,10 @@ class SessionManager:
             with open(self._session_file_path, "w", encoding="utf-8") as f:
                 json.dump(session_data, f, indent=2, ensure_ascii=False)
 
-            logger.info("Session saved to file")
+            logger.info("External session saved to file")
 
         except (OSError, TypeError) as e:
-            logger.error(f"Failed to save session to file: {e}")
+            logger.error(f"Failed to save external session to file: {e}")
 
     async def get_session(self) -> UserSession | None:
         """Get current active session.
@@ -105,6 +113,27 @@ class SessionManager:
                 logger.error(f"Failed to delete session file: {e}")
 
         logger.info("Logged out successfully")
+
+    async def is_session_expired(self) -> bool:
+        """Check if current session is expired or will expire soon.
+
+        Returns:
+            True if session is expired or will expire within 5 minutes, False otherwise
+        """
+        session = await self.get_session()
+        return session is None
+
+    async def check_and_handle_session(self) -> bool:
+        """Check session validity and handle re-authentication if needed.
+
+        Returns:
+            True if session is valid, False if re-authentication is required
+        """
+        if not await self.is_session_expired():
+            return True
+
+        logger.warning("Session expired, re-authentication required")
+        return False
 
 
 # Global session manager instance

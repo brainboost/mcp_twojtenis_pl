@@ -19,9 +19,9 @@ from fastmcp import FastMCP
 
 from .auth import session_manager
 from .config import config
-from .endpoints.booking import booking_endpoint
 from .endpoints.clubs import clubs_endpoint
 from .endpoints.reservations import reservations_endpoint
+from .endpoints.schedules import schedule_endpoint
 
 # Configure logging
 logging.basicConfig(
@@ -77,7 +77,7 @@ async def get_club_schedule(club_id: str, sport_id: int, date: str) -> dict[str,
         Schedule data with court availability information
     """
     try:
-        result = await booking_endpoint.get_club_schedule(club_id, sport_id, date)
+        result = await schedule_endpoint.get_club_schedule(club_id, sport_id, date)
         return result
 
     except Exception as e:
@@ -196,6 +196,76 @@ async def delete_reservation(booking_id: str) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Error deleting reservation: {e}")
         return {"success": False, "message": f"Error: {str(e)}"}
+
+
+@mcp.tool()
+async def login(email: str, password: str) -> dict[str, Any]:
+    """Initiate authentication with TwojTenis.pl
+
+    Returns:
+        Login result with success status:
+        True if authentication succeeded, False otherwise
+    """
+    try:
+        result = await reservations_endpoint.login(email=email, password=password)
+        if result:
+            return {
+                "success": True,
+                "message": "Authenticated",
+            }
+        return {"success": False, "message": "Authentication failed. Check credentials"}
+
+    except Exception as e:
+        logger.error(f"Login initiation failed: {e}")
+        return {"success": False, "message": f"Login failed: {str(e)}"}
+
+
+@mcp.tool()
+async def get_session_status() -> dict[str, Any]:
+    """Get current authentication session status.
+
+    Returns:
+        Current session status information
+    """
+    try:
+        session = await session_manager.get_session()
+        if session:
+            return {
+                "success": True,
+                "authenticated": True,
+                "session_id": session,
+            }
+        return {
+            "success": True,
+            "authenticated": False,
+            "message": "No active session",
+        }
+
+    except Exception as e:
+        logger.error(f"Session status check failed: {e}")
+        return {
+            "success": False,
+            "authenticated": False,
+            "message": f"Status check failed: {str(e)}",
+        }
+
+
+@mcp.tool()
+async def logout() -> dict[str, Any]:
+    """Logout and clear current session.
+
+    Returns:
+        Logout result
+    """
+    try:
+        # Clear session
+        await session_manager.logout()
+
+        return {"success": True, "message": "Logged out successfully"}
+
+    except Exception as e:
+        logger.error(f"Logout failed: {e}")
+        return {"success": False, "message": f"Logout failed: {str(e)}"}
 
 
 async def initialize() -> None:

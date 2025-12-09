@@ -22,6 +22,7 @@ class TestClub:
         """Test creating a club."""
         club = Club(
             id="blonia_sport",
+            num=90,
             name="Błonia Sport",
             address="al. 3 Maja 57",
             phone="+48728871400",
@@ -36,6 +37,7 @@ class TestClub:
         """Test club serialization."""
         club = Club(
             id="test_club",
+            num=0,
             name="Test Club",
             address="Test Address",
             phone="+48123456789",

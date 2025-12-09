@@ -12,11 +12,27 @@ logger = logging.getLogger(__name__)
 
 
 class ReservationsEndpoint:
-    """Endpoint for reservation-related operations."""
+    """
+    Endpoint for reservation related operations.
+    Before calls to action methods, log in to setup auth session
+    """
 
     def __init__(self):
         """Initialize reservations endpoint."""
         self.client = TwojTenisClient()
+
+    async def login(self, email: str, password: str) -> bool:
+        """Login on the reservation site.
+
+        Args:
+            email: User email
+            password: User password
+
+        Returns:
+            True if login successful, False otherwise
+        """
+        sess = await self.client.login(email=email, password=password)
+        return sess is not None
 
     async def get_reservations(self) -> list[dict[str, Any]]:
         """Get user's current reservations.
@@ -144,7 +160,6 @@ class ReservationsEndpoint:
                 logger.info(
                     f"Reservation {booking_id} made successfully: #{club_num}, court {court_number}, {date} from {start_time} to {end_time}"
                 )
-                # session = await session_manager.get_session()
                 return {
                     "success": True,
                     "message": f"Reservation made for court {court_number} on {date} from {start_time} to {end_time}",

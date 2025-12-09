@@ -36,9 +36,19 @@ class TwojTenisClient:
     async def refresh_user_session(self):
         """Force refresh user session."""
         logger.info("Forcing user session refresh")
-        session_id = await self._login(config.email, config.password)
-        if session_id:
-            await session_manager.save_session(session_id=session_id)
+
+        try:
+            email = config.email
+            password = config.password
+            # If credentials are available, use them
+            session_id = await self.login(email, password)
+            if session_id:
+                await session_manager.save_session(session_id=session_id)
+        except (ValueError, AttributeError):
+            # No credentials configured
+            logger.warning(
+                "No credentials configured, please configure user credentials"
+            )
 
     async def with_session_retry(self, operation: Callable, *args, **kwargs) -> Any:
         """Execute an operation with session retry logic on server errors.
@@ -65,11 +75,10 @@ class TwojTenisClient:
                 session = await session_manager.get_session()
                 if not session:
                     raise ApiErrorException(
-                        code="NO_SESSION",
-                        message="No active session available",
+                        code="AUTHENTICATION_REQUIRED",
+                        message="Authentication failed. Cannot get session_id to authenticate.",
                     )
-
-                # Execute with current session
+                # Execute with current session ID
                 result = await operation(*args, **kwargs)
                 return result
 
@@ -79,7 +88,13 @@ class TwojTenisClient:
                 # If this is a server/auth error and we haven't retried yet, try refreshing
                 if attempt < max_retries and (
                     e.code
-                    in ["NO_SESSION", "HTTP_ERROR", "AUTH_ERROR", "REQUEST_FAILED"]
+                    in [
+                        "NO_SESSION",
+                        "HTTP_ERROR",
+                        "AUTH_ERROR",
+                        "REQUEST_FAILED",
+                        "AUTHENTICATION_REQUIRED",
+                    ]
                     or (
                         e.code == "HTTP_ERROR"
                         and any(
@@ -89,10 +104,16 @@ class TwojTenisClient:
                     )
                 ):
                     attempt += 1
-                    logger.warning(
-                        f"Server error {e.message} on attempt {attempt}, refreshing the session"
-                    )
-                    await self.refresh_user_session()
+
+                    if e.code == "AUTHENTICATION_REQUIRED":
+                        logger.warning(
+                            f"Authentication required on attempt {attempt}, please use login() tool"
+                        )
+                    else:
+                        logger.warning(
+                            f"Server error {e.message} on attempt {attempt}, refreshing the session"
+                        )
+                        await self.refresh_user_session()
                     continue
                 else:
                     # No more retries or non-retryable error
@@ -189,7 +210,7 @@ class TwojTenisClient:
                 details={"error": str(e)},
             ) from e
 
-    async def _login(self, email: str, password: str) -> str | None:
+    async def login(self, email: str, password: str) -> str | None:
         """Login to TwojTenis.pl and return PHPSESSID.
 
         Args:
@@ -230,7 +251,6 @@ class TwojTenisClient:
                     headers=request_headers,
                     data=data,
                 )
-                # Check for successful response
                 # redirect after successful authentication
                 if response.status_code == 302:
                     # Extract response headers
@@ -289,7 +309,6 @@ class TwojTenisClient:
             club_id: Club identifier
             sport_id: Sport ID
             date: Date in DD.MM.YYYY format
-            phpsessid: PHP session ID
 
         Returns:
             Schedule data if successful, None otherwise

@@ -12,11 +12,11 @@ from ..utils import validate_date
 logger = logging.getLogger(__name__)
 
 
-class BookingEndpoint:
-    """Endpoint for booking and schedule operations."""
+class ScheduleEndpoint:
+    """Endpoint for reading club schedules."""
 
     def __init__(self):
-        """Initialize booking endpoint."""
+        """Initialize endpoint."""
         self.client = TwojTenisClient()
 
     async def get_club_schedule(
@@ -118,5 +118,5 @@ class BookingEndpoint:
             }
 
 
-# Global booking endpoint instance
-booking_endpoint = BookingEndpoint()
+# Global endpoint instance
+schedule_endpoint = ScheduleEndpoint()

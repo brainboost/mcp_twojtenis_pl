@@ -61,23 +61,31 @@ class Config:
 
     @property
     def email(self) -> str:
-        """Get user email from configuration."""
+        """Get user email from configuration (legacy support)."""
         email = self.get("TWOJTENIS_EMAIL")
         if not email:
             raise ValueError(
-                "TWOJTENIS_EMAIL is required in environment variables or config file"
+                "TWOJTENIS_EMAIL is not configured. Please use OAuth authentication instead."
             )
         return email
 
     @property
     def password(self) -> str:
-        """Get user password from configuration."""
+        """Get user password from configuration (legacy support)."""
         password = self.get("TWOJTENIS_PASSWORD")
         if not password:
             raise ValueError(
-                "TWOJTENIS_PASSWORD is required in environment variables or config file"
+                "TWOJTENIS_PASSWORD is not configured. Please use OAuth authentication instead."
             )
         return password
+
+    @property
+    def has_credentials(self) -> bool:
+        """Check if credentials are configured."""
+        try:
+            return self.email is not None and self.password is not None
+        except ValueError:
+            return False
 
     @property
     def base_url(self) -> str:
@@ -104,15 +112,35 @@ class Config:
         """Get delay between retry attempts in seconds."""
         return float(self.get("TWOJTENIS_RETRY_DELAY", "1.0"))
 
+    @property
+    def auth_server_port_range(self) -> tuple[int, int]:
+        """Get port range for local authentication server."""
+        start = int(self.get("TWOJTENIS_AUTH_PORT_START", "8080"))
+        end = int(self.get("TWOJTENIS_AUTH_PORT_END", "8090"))
+        return (start, end)
+
+    @property
+    def auth_timeout(self) -> int:
+        """Get authentication timeout in seconds."""
+        return int(self.get("TWOJTENIS_AUTH_TIMEOUT", "300"))
+
+    @property
+    def enable_debug_mode(self) -> bool:
+        """Check if debug mode is enabled."""
+        return self.get("TWOJTENIS_DEBUG", "false").lower() == "true"
+
     def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
-            "email": self.email,
             "base_url": self.base_url,
             "session_lifetime": self.session_lifetime,
             "request_timeout": self.request_timeout,
             "retry_attempts": self.retry_attempts,
             "retry_delay": self.retry_delay,
+            "auth_server_port_range": self.auth_server_port_range,
+            "auth_timeout": self.auth_timeout,
+            "enable_debug_mode": self.enable_debug_mode,
+            "has_credentials": self.has_credentials,
         }
 
 
