@@ -1,14 +1,9 @@
-"""Reservation-related MCP endpoints."""
-
-import logging
 from typing import Any
 
 from ..client import TwojTenisClient
 from ..models import ApiErrorException
 from ..schedule_parser import ScheduleParser
 from ..utils import validate_date, validate_time
-
-logger = logging.getLogger(__name__)
 
 
 class ReservationsEndpoint:
@@ -21,7 +16,7 @@ class ReservationsEndpoint:
         """Initialize reservations endpoint."""
         self.client = TwojTenisClient()
 
-    async def login(self, email: str, password: str) -> bool:
+    async def login(self, email: str, password: str) -> str:
         """Login on the reservation site.
 
         Args:
@@ -32,49 +27,57 @@ class ReservationsEndpoint:
             True if login successful, False otherwise
         """
         sess = await self.client.login(email=email, password=password)
-        return sess is not None
+        if sess is not None:
+            return sess
 
-    async def get_reservations(self) -> list[dict[str, Any]]:
+        raise ApiErrorException(
+            code="AUTH_ERROR",
+            message="Authentication failed. Check your credentials for twojtenis.pl",
+        )
+
+    async def get_reservations(self, session_id: str) -> list[dict[str, Any]]:
         """Get user's current reservations.
+
+        Args:
+            session_id: Authenticated user's session ID
 
         Returns:
             List of reservation dictionaries
         """
-        try:
-            html_content = await self.client.with_session_retry(
-                self.client.get_reservations,
-            )
-            if not html_content:
-                logger.warning("No reservation data received")
-                return []
-
-            reservations = ScheduleParser.parse_reservations(html_content)
-            result = []
-            for reservation in reservations:  # type: ignore
-                result.append(reservation)
-
-            logger.info(f"Retrieved {len(result)} reservations")
-            return result
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to get reservations: {e.message}")
-            return []
-        except Exception as e:
-            logger.error(f"Unexpected error getting reservations: {e}")
+        html_content = await self.client.with_session_retry(
+            self.client.get_reservations, session_id=session_id
+        )
+        if not html_content:
             return []
 
-    async def get_reservation_details(self, booking_id: str) -> dict[str, Any]:
+        reservations = ScheduleParser.parse_reservations(html_content)
+        result = []
+        for reservation in reservations:  # type: ignore
+            result.append(reservation)
+        return result
+
+    async def get_reservation_details(
+        self, session_id: str, booking_id: str
+    ) -> dict[str, Any]:
+        """Get details of user's reservations.
+
+        Args:
+            session_id: Authenticated user's session ID
+            booking_id: Reservation ID
+
+        Returns:
+            Reservation details dictionary
+        """
         booking_info = {}
         try:
-            # with retry logic
             booking_info = await self.client.with_session_retry(
                 self.client.get_reservation,
+                session_id=session_id,
                 booking_id=booking_id,
             )
 
             if booking_info:
                 reservation = ScheduleParser.parse_reservation(booking_info)
-                logger.info(f"Get details for reservation {booking_id} succeeded")
                 if reservation:
                     return {
                         "success": True,
@@ -94,24 +97,25 @@ class ReservationsEndpoint:
                             "pay_till": reservation["pay_till"],
                         },
                     }
-
             return {
                 "success": False,
                 "message": f"Failed to get reservation {booking_id} details.",
             }
 
         except ApiErrorException as e:
-            logger.error(f"API error making reservation: {e.message}")
             return {
                 "success": False,
                 "message": f"Get details for reservation {booking_id} failed: {e.message}",
             }
         except Exception as e:
-            logger.error(f"Unexpected error getting reservation details: {e}")
-            return {"success": False, "message": f"Unexpected error: {str(e)}"}
+            return {
+                "success": False,
+                "message": f"Unexpected error while getting reservation details: {str(e)}",
+            }
 
     async def make_reservation(
         self,
+        session_id: str,
         club_num: int,
         court_number: int,
         date: str,
@@ -122,6 +126,7 @@ class ReservationsEndpoint:
         """Make a court reservation.
 
         Args:
+            session_id: Authenticated user's session ID
             club_num: Club number
             court_number: Court number, from 1
             date: Date in DD.MM.YYYY format
@@ -145,9 +150,9 @@ class ReservationsEndpoint:
             }
 
         try:
-            # with retry logic
             booking_id = await self.client.with_session_retry(
                 self.client.make_reservation,
+                session_id=session_id,
                 club_num=club_num,
                 sport_id=sport_id,
                 court_number=court_number,
@@ -157,9 +162,6 @@ class ReservationsEndpoint:
             )
 
             if booking_id:
-                logger.info(
-                    f"Reservation {booking_id} made successfully: #{club_num}, court {court_number}, {date} from {start_time} to {end_time}"
-                )
                 return {
                     "success": True,
                     "message": f"Reservation made for court {court_number} on {date} from {start_time} to {end_time}",
@@ -180,13 +182,16 @@ class ReservationsEndpoint:
                 }
 
         except ApiErrorException as e:
-            logger.error(f"API error making reservation: {e.message}")
             return {"success": False, "message": f"Reservation failed: {e.message}"}
         except Exception as e:
-            logger.error(f"Unexpected error making reservation: {e}")
-            return {"success": False, "message": f"Unexpected error: {str(e)}"}
+            return {
+                "success": False,
+                "message": f"Unexpected error while making reservation: {str(e)}",
+            }
 
-    async def delete_reservation(self, booking_id: str) -> dict[str, Any]:
+    async def delete_reservation(
+        self, session_id: str, booking_id: str
+    ) -> dict[str, Any]:
         """Delete a court reservation.
 
         Args:
@@ -200,30 +205,27 @@ class ReservationsEndpoint:
         try:
             success = await self.client.with_session_retry(
                 self.client.delete_reservation,
+                session_id=session_id,
                 booking_id=booking_id,
             )
             if success:
                 msg = f"Reservation deleted successfully: {booking_id}"
-                logger.info(msg=msg)
                 return {
                     "success": True,
                     "message": msg,
                 }
             else:
                 msg = f"Failed to delete reservation {booking_id}. The reservation might not exist."
-                logger.error(msg=msg)
                 return {
                     "success": False,
                     "message": msg,
                 }
         except ApiErrorException as e:
-            logger.error(f"API error deleting reservation: {e.message}")
             return {
                 "success": False,
                 "message": f"Reservation {booking_id} deletion failed: {e.message}",
             }
         except Exception as e:
-            logger.error(f"Unexpected error deleting reservation: {e}")
             return {
                 "success": False,
                 "message": f"Reservation {booking_id} deletion failed. Unexpected error: {str(e)}",

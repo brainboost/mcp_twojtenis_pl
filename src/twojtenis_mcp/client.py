@@ -1,18 +1,12 @@
-"""HTTP client for TwojTenis.pl API."""
-
-import logging
 import re
 from collections.abc import Callable
 from typing import Any
 
 import httpx
 
-from .auth import session_manager
 from .config import config
 from .models import ApiErrorException
 from .utils import extract_id_from_url
-
-logger = logging.getLogger(__name__)
 
 
 class TwojTenisClient:
@@ -33,25 +27,8 @@ class TwojTenisClient:
             "Pragma": "no-cache",
         }
 
-    async def refresh_user_session(self):
-        """Force refresh user session."""
-        logger.info("Forcing user session refresh")
-
-        try:
-            email = config.email
-            password = config.password
-            # If credentials are available, use them
-            session_id = await self.login(email, password)
-            if session_id:
-                await session_manager.save_session(session_id=session_id)
-        except (ValueError, AttributeError):
-            # No credentials configured
-            logger.warning(
-                "No credentials configured, please configure user credentials"
-            )
-
     async def with_session_retry(self, operation: Callable, *args, **kwargs) -> Any:
-        """Execute an operation with session retry logic on server errors.
+        """Execute an operation with retry logic on server errors.
 
         Args:
             operation: The async function to execute
@@ -72,48 +49,31 @@ class TwojTenisClient:
 
         for attempt in range(max_retries + 1):
             try:
-                session = await session_manager.get_session()
+                session = kwargs["session_id"]
                 if not session:
                     raise ApiErrorException(
                         code="AUTHENTICATION_REQUIRED",
-                        message="Authentication failed. Cannot get session_id to authenticate.",
+                        message="Authentication required. Use login and pass session_id to authenticate.",
                     )
-                # Execute with current session ID
                 result = await operation(*args, **kwargs)
                 return result
 
             except ApiErrorException as e:
                 last_exception = e
 
-                # If this is a server/auth error and we haven't retried yet, try refreshing
+                # If this is a server error and we haven't retried yet
                 if attempt < max_retries and (
                     e.code
                     in [
-                        "NO_SESSION",
                         "HTTP_ERROR",
-                        "AUTH_ERROR",
                         "REQUEST_FAILED",
-                        "AUTHENTICATION_REQUIRED",
                     ]
                     or (
                         e.code == "HTTP_ERROR"
-                        and any(
-                            code in str(e)
-                            for code in ["401", "403", "500", "502", "503"]
-                        )
+                        and any(code in str(e) for code in ["500", "502", "503"])
                     )
                 ):
                     attempt += 1
-
-                    if e.code == "AUTHENTICATION_REQUIRED":
-                        logger.warning(
-                            f"Authentication required on attempt {attempt}, please use login() tool"
-                        )
-                    else:
-                        logger.warning(
-                            f"Server error {e.message} on attempt {attempt}, refreshing the session"
-                        )
-                        await self.refresh_user_session()
                     continue
                 else:
                     # No more retries or non-retryable error
@@ -125,11 +85,11 @@ class TwojTenisClient:
                     message=f"Unexpected error: {str(e)}",
                 )
                 break
-
         raise last_exception
 
     async def _make_request(
         self,
+        sessid: str,
         method: str,
         url: str,
         headers: dict[str, str] | None = None,
@@ -140,13 +100,13 @@ class TwojTenisClient:
         """Make HTTP request
 
         Args:
+            sessid: user's session ID for authentication
             method: HTTP method
             url: Request URL
             headers: Request headers
             params: URL parameters
             data: Request data
             form_data: Form data for multipart requests
-            phpsessid: PHP session ID for authentication
 
         Returns:
             Tuple of (response_data, response_headers)
@@ -155,13 +115,12 @@ class TwojTenisClient:
         if headers:
             request_headers.update(headers)
 
-        session = await session_manager.get_session()
-        if not session:
+        if not sessid:
             raise ApiErrorException(
                 code="NO_SESSION",
-                message="No active session available",
+                message="No active user session available",
             )
-        request_headers["Cookie"] = f"PHPSESSID={session.phpsessid}; CooAcc=1"
+        request_headers["Cookie"] = f"PHPSESSID={sessid}; CooAcc=1"
 
         request_data = None
         if form_data:
@@ -194,8 +153,6 @@ class TwojTenisClient:
                 if response.status_code >= 200 and response.status_code < 303:
                     return response_data, response_headers
 
-                logger.warning(f"HTTP {response.status_code}: {response.text[:200]}")
-
                 raise ApiErrorException(
                     code="HTTP_ERROR",
                     message=f"HTTP {response.status_code}",
@@ -203,7 +160,6 @@ class TwojTenisClient:
                 )
 
         except httpx.RequestError as e:
-            logger.warning(f"Request failed: {e}")
             raise ApiErrorException(
                 code="REQUEST_FAILED",
                 message=f"{method} request failed for {url}",
@@ -211,7 +167,7 @@ class TwojTenisClient:
             ) from e
 
     async def login(self, email: str, password: str) -> str | None:
-        """Login to TwojTenis.pl and return PHPSESSID.
+        """Login to TwojTenis.pl and return session ID.
 
         Args:
             email: User email
@@ -242,41 +198,41 @@ class TwojTenisClient:
         }
         request_headers = dict(self.static_headers)
         request_headers.update(headers)
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.request(
+                method="POST",
+                url=url,
+                headers=request_headers,
+                data=data,
+            )
+            # redirect after successful authentication
+            if response.status_code == 302:
+                response_headers = dict(response.headers)
+                # Extract PHPSESSID from Set-Cookie header
+                set_cookie = response_headers.get("set-cookie", "")  # type: ignore
+                phpsessid_match = re.search(r"PHPSESSID=([^;]+)", set_cookie)
 
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.request(
-                    method="POST",
-                    url=url,
-                    headers=request_headers,
-                    data=data,
-                )
-                # redirect after successful authentication
-                if response.status_code == 302:
-                    # Extract response headers
-                    response_headers = dict(response.headers)
+                if phpsessid_match:
+                    phpsessid = phpsessid_match.group(1)
+                    return phpsessid
 
-                    # Extract PHPSESSID from Set-Cookie header
-                    set_cookie = response_headers.get("set-cookie", "")  # type: ignore
-                    phpsessid_match = re.search(r"PHPSESSID=([^;]+)", set_cookie)
-
-                    if phpsessid_match:
-                        phpsessid = phpsessid_match.group(1)
-                        logger.info(f"Login successful, PHPSESSID: {phpsessid[:8]}...")
-                        return phpsessid
-
-                logger.error("No PHPSESSID found in response")
-                return None
-
-        except ApiErrorException as e:
-            logger.error(f"Login failed: {e.message}")
+            # No PHPSESSID found in response
             return None
 
     async def get_club_info(
         self,
+        session_id: str,
         club_id: str,
     ) -> str | None:
-        """Get club's information, working hours table"""
+        """Get club's information, working hours table.
+
+        Args:
+            session_id: Logged user's session ID
+            club_id: Club identifier
+
+        Returns:
+            Club information
+        """
 
         url = f"{self.base_url}/pl/kluby/{club_id}/courts_list.html"
         headers = {
@@ -289,8 +245,8 @@ class TwojTenisClient:
             "Sec-GPC": "1",
             "Priority": "u=0, i",
         }
-
         response_data, _ = await self._make_request(
+            sessid=session_id,
             method="GET",
             url=url,
             headers=headers,
@@ -299,6 +255,7 @@ class TwojTenisClient:
 
     async def get_club_schedule(
         self,
+        session_id: str,
         club_id: str,
         sport_id: int,
         date: str,
@@ -306,6 +263,7 @@ class TwojTenisClient:
         """Get club schedule for specific date and sport.
 
         Args:
+            session_id: Logged user's session ID
             club_id: Club identifier
             sport_id: Sport ID
             date: Date in DD.MM.YYYY format
@@ -336,6 +294,7 @@ class TwojTenisClient:
         }
 
         response_data, _ = await self._make_request(
+            sessid=session_id,
             method="POST",
             url=url,
             data=data,
@@ -343,11 +302,11 @@ class TwojTenisClient:
         )
         return response_data
 
-    async def get_reservations(self) -> str | None:
+    async def get_reservations(self, session_id: str) -> str | None:
         """Get user's current reservations.
 
         Args:
-            phpsessid: PHP session ID
+            session_id: Logged user's session ID
 
         Returns:
             HTML response with reservations if successful, None otherwise
@@ -365,21 +324,25 @@ class TwojTenisClient:
             "Priority": "u=0, i",
             "TE": "trailers",
         }
+        response_data, _ = await self._make_request(
+            sessid=session_id,
+            method="GET",
+            url=url,
+            headers=headers,
+        )
+        return response_data
 
-        try:
-            response_data, _ = await self._make_request(
-                method="GET",
-                url=url,
-                headers=headers,
-            )
-            logger.debug("Reservations retrieved successfully")
-            return response_data
+    async def get_reservation(self, session_id: str, booking_id: str) -> str | None:
+        """
+        Get user's reservation by ID
 
-        except ApiErrorException as e:
-            logger.error(f"Failed to get reservations: {e.message}")
-            return None
+        Args:
+            session_id: Logged user's session ID
+            booking_id: Reservation ID
 
-    async def get_reservation(self, booking_id: str) -> str | None:
+        Returns:
+            HTML response with reservations if successful, None otherwise
+        """
         url = f"{self.base_url}/pl/rsv/show/{booking_id}.html"
 
         headers = {
@@ -394,21 +357,17 @@ class TwojTenisClient:
             "TE": "trailers",
         }
 
-        try:
-            response_data, _headers = await self._make_request(
-                method="GET",
-                url=url,
-                headers=headers,
-            )
-            logger.debug("Reservations retrieved successfully")
-            return response_data
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to get reservations: {e.message}")
-            return None
+        response_data, _headers = await self._make_request(
+            sessid=session_id,
+            method="GET",
+            url=url,
+            headers=headers,
+        )
+        return response_data
 
     async def make_reservation(
         self,
+        session_id: str,
         club_num: int,
         sport_id: int,
         court_number: int,
@@ -419,6 +378,7 @@ class TwojTenisClient:
         """Make a court reservation.
 
         Args:
+            session_id: Logged user's session ID
             club_num: Club number
             sport_id: Sport ID
             court_number: Court number starting from 1
@@ -427,7 +387,7 @@ class TwojTenisClient:
             end_time: End time in HH:MM format
 
         Returns:
-            True if reservation successful, False otherwise
+            Reservation ID if reservation successful, None otherwise
         """
         url = f"{self.base_url}/pl/rsv/make.html"
         form_data = {
@@ -457,27 +417,21 @@ class TwojTenisClient:
             "TE": "trailers",
         }
 
-        try:
-            _, _headers = await self._make_request(
-                method="POST",
-                url=url,
-                form_data=form_data,
-                headers=headers,
-            )
-            logger.info(
-                f"Reservation made for club #{club_num}, court {court_number} on {date} from {start_time} to {end_time}"
-            )
-            if _headers is not None:
-                booking_id = extract_id_from_url(_headers.get("location", ""))
-                return booking_id
-
-        except ApiErrorException as e:
-            logger.error(f"Failed to make reservation: {e.message}")
-
+        _, _headers = await self._make_request(
+            sessid=session_id,
+            method="POST",
+            url=url,
+            form_data=form_data,
+            headers=headers,
+        )
+        if _headers is not None:
+            booking_id = extract_id_from_url(_headers.get("location", ""))
+            return booking_id
         return None
 
     async def delete_reservation(
         self,
+        session_id: str,
         booking_id: str,
     ) -> bool:
         """Delete a court reservation.
@@ -506,53 +460,12 @@ class TwojTenisClient:
 
         try:
             _response_data, _ = await self._make_request(
+                sessid=session_id,
                 method="GET",
                 url=url,
                 headers=headers,
             )
-
-            logger.info(f"Reservation {booking_id} deleted")
             return True
 
-        except ApiErrorException as e:
-            logger.error(f"Failed to delete reservation {booking_id}: {e.message}")
+        except ApiErrorException:
             return False
-
-    async def keep_logged(self) -> bool:
-        """Keep session alive.
-        Returns:
-            True if session is still valid, False otherwise
-        """
-        url = f"{self.base_url}/ajax.php?load=keep_logged"
-
-        headers = {
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/home.html",
-            "X-Requested-With": "XMLHttpRequest",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-GPC": "1",
-            "TE": "trailers",
-        }
-        request_headers = dict(self.static_headers)
-        request_headers.update(headers)
-
-        try:
-            _response_data, _ = await self._make_request(
-                method="POST",
-                url=url,
-                headers=request_headers,
-            )
-
-            # If we get here without authentication error, session is valid
-            logger.debug("Session keep-alive successful")
-            return True
-
-        except ApiErrorException as e:
-            if e.code == "AUTH_ERROR":
-                logger.warning("Session expired")
-                return False
-            else:
-                logger.error(f"Keep logged failed: {e.message}")
-                return False

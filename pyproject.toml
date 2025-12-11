@@ -20,8 +20,6 @@ dependencies = [
 
 [project.scripts]
 twojtenis-mcp = "twojtenis_mcp.server:main"
-twojtenis-mcp-sse = "twojtenis_mcp.sse_server:run_sse_server"
-twojtenis-mcp-combined = "twojtenis_mcp.combined_server:main"
 
 [build-system]
 requires = ["hatchling"]

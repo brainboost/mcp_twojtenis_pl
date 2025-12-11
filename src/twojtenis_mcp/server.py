@@ -17,7 +17,7 @@ if "--debug" in sys.argv:
 
 from fastmcp import FastMCP
 
-from .auth import session_manager
+# from .auth import session_manager
 from .config import config
 from .endpoints.clubs import clubs_endpoint
 from .endpoints.reservations import reservations_endpoint
@@ -25,7 +25,9 @@ from .endpoints.schedules import schedule_endpoint
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    filename="twojtenis_mcp.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ async def get_all_clubs() -> list[dict[str, Any]]:
     """
     try:
         clubs = await clubs_endpoint.get_clubs()
-        logger.info(f"Retrieved {len(clubs)} clubs")
+        logger.debug(f"Retrieved {len(clubs)} clubs")
         return clubs
 
     except Exception as e:
@@ -60,15 +62,18 @@ async def get_all_sports() -> dict[int, str]:
     sports: dict[int, str] = {}
     for sport in clubs_endpoint.get_sports():
         sports[sport["id"]] = sport["name"]
-    logger.info(f"Retrieved {len(sports)} sports")
+    logger.debug(f"Retrieved {len(sports)} sports")
     return sports
 
 
 @mcp.tool()
-async def get_club_schedule(club_id: str, sport_id: int, date: str) -> dict[str, Any]:
-    """Get court availability schedule for a specific club and sport.
+async def get_club_schedule(
+    session_id: str, club_id: str, sport_id: int, date: str
+) -> dict[str, Any]:
+    """Get court availability schedule for the specific club and sport.
 
     Args:
+        session_id: Logged user session ID (call login to retrieve)
         club_id: Club identifier (e.g., 'blonia_sport')
         sport_id: Sport ID
         date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
@@ -77,11 +82,18 @@ async def get_club_schedule(club_id: str, sport_id: int, date: str) -> dict[str,
         Schedule data with court availability information
     """
     try:
-        result = await schedule_endpoint.get_club_schedule(club_id, sport_id, date)
+        result = await schedule_endpoint.get_club_schedule(
+            session_id, club_id, sport_id, date
+        )
+        logger.debug(
+            f"Retrieved {len(result)} results for club {club_id}, sport {sport_id}"
+        )
         return result
 
     except Exception as e:
-        logger.error(f"Error getting club schedule: {e}")
+        logger.error(
+            f"Error getting club {club_id} schedule for sport {sport_id}, session_id {session_id}: {e}"
+        )
         return {
             "success": False,
             "message": f"Error: {str(e)}",
@@ -90,15 +102,18 @@ async def get_club_schedule(club_id: str, sport_id: int, date: str) -> dict[str,
 
 
 @mcp.tool()
-async def get_reservations() -> list[dict[str, Any]]:
+async def get_reservations(session_id: str) -> list[dict[str, Any]]:
     """Get user's current court reservations.
+
+    Args:
+        session_id: Logged user session ID (call login to retrieve)
 
     Returns:
         List of user's reservations
     """
     try:
-        reservations = await reservations_endpoint.get_reservations()
-        logger.info(f"Retrieved {len(reservations)} reservations")
+        reservations = await reservations_endpoint.get_reservations(session_id)
+        logger.debug(f"Retrieved {len(reservations)} reservations")
         return reservations
 
     except Exception as e:
@@ -107,24 +122,35 @@ async def get_reservations() -> list[dict[str, Any]]:
 
 
 @mcp.tool()
-async def get_reservation_details(booking_id: str) -> dict[str, Any]:
-    """Get reservation details for the booking_id.
+async def get_reservation_details(session_id: str, booking_id: str) -> dict[str, Any]:
+    """Get reservation details.
+
+    Args:
+        session_id: Logged user session ID (call login to retrieve)
+        booking_id: Reservation ID
 
     Returns:
         Reservation details
     """
     try:
-        reservation = await reservations_endpoint.get_reservation_details(booking_id)
-        logger.info(f"Retrieved reservation details for {booking_id}")
+        reservation = await reservations_endpoint.get_reservation_details(
+            session_id, booking_id
+        )
+        logger.debug(
+            f"Retrieved reservation details for {session_id}, booking_id: {booking_id}"
+        )
         return reservation
 
     except Exception as e:
-        logger.error(f"Error getting reservation details for {booking_id}: {e}")
+        logger.error(
+            f"Error getting reservation details for {session_id}, booking_id: {booking_id}: {e}"
+        )
         return {}
 
 
 @mcp.tool()
 async def put_reservation(
+    session_id: str,
     club_id: str,
     court_number: int,
     date: str,
@@ -135,6 +161,7 @@ async def put_reservation(
     """Make a court reservation.
 
     Args:
+        session_id: Logged user session ID (call login to retrieve)
         club_id: Club identifier (e.g., 'blonia_sport')
         court_number: Court number starting from 1 (e.g., 1, 2, 3...)
         date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
@@ -151,6 +178,7 @@ async def put_reservation(
             return {"success": False, "message": f"Error: unknown club {club_id}"}
 
         result = await reservations_endpoint.make_reservation(
+            session_id=session_id,
             club_num=club.num,
             court_number=court_number,
             date=date,
@@ -160,8 +188,8 @@ async def put_reservation(
         )
 
         if result["success"]:
-            logger.info(
-                f"Reservation made: {club_id}, court {court_number}, {date} from {start_time} to {end_time}"
+            logger.debug(
+                f"Reservation made for {session_id}, club: {club_id}, court: {court_number}, {date} from {start_time} to {end_time}"
             )
         else:
             logger.warning(f"Reservation failed: {result['message']}")
@@ -169,25 +197,30 @@ async def put_reservation(
         return result
 
     except Exception as e:
-        logger.error(f"Error making reservation: {e}")
+        logger.error(
+            f"Error making reservation for {session_id}, club: {club_id}, sport {sport_id}, on date {date}: {e}"
+        )
         return {"success": False, "message": f"Error: {str(e)}"}
 
 
 @mcp.tool()
-async def delete_reservation(booking_id: str) -> dict[str, Any]:
+async def delete_reservation(session_id: str, booking_id: str) -> dict[str, Any]:
     """Delete a court reservation.
 
     Args:
+        session_id: Logged user session ID
         booking_id: Reservation identifier (string)
 
     Returns:
         Deletion result with success status and message
     """
     try:
-        result = await reservations_endpoint.delete_reservation(booking_id=booking_id)
+        result = await reservations_endpoint.delete_reservation(
+            session_id=session_id, booking_id=booking_id
+        )
 
         if result["success"]:
-            logger.info(f"Reservation deleted: {booking_id}")
+            logger.debug(f"Reservation deleted: {booking_id}")
         else:
             logger.warning(f"Reservation deletion failed: {result['message']}")
 
@@ -204,15 +237,14 @@ async def login(email: str, password: str) -> dict[str, Any]:
 
     Returns:
         Login result with success status:
-        True if authentication succeeded, False otherwise
+        session_id: Authenticated user's session ID
     """
     try:
         result = await reservations_endpoint.login(email=email, password=password)
         if result:
-            return {
-                "success": True,
-                "message": "Authenticated",
-            }
+            logger.debug(f"Authentication succeeded for {email}. Session_id {result}")
+            return {"success": True, "message": "Authenticated", "session_id": result}
+        logger.error(f"Authentication failed for {email}")
         return {"success": False, "message": "Authentication failed. Check credentials"}
 
     except Exception as e:
@@ -220,64 +252,12 @@ async def login(email: str, password: str) -> dict[str, Any]:
         return {"success": False, "message": f"Login failed: {str(e)}"}
 
 
-@mcp.tool()
-async def get_session_status() -> dict[str, Any]:
-    """Get current authentication session status.
-
-    Returns:
-        Current session status information
-    """
-    try:
-        session = await session_manager.get_session()
-        if session:
-            return {
-                "success": True,
-                "authenticated": True,
-                "session_id": session,
-            }
-        return {
-            "success": True,
-            "authenticated": False,
-            "message": "No active session",
-        }
-
-    except Exception as e:
-        logger.error(f"Session status check failed: {e}")
-        return {
-            "success": False,
-            "authenticated": False,
-            "message": f"Status check failed: {str(e)}",
-        }
-
-
-@mcp.tool()
-async def logout() -> dict[str, Any]:
-    """Logout and clear current session.
-
-    Returns:
-        Logout result
-    """
-    try:
-        # Clear session
-        await session_manager.logout()
-
-        return {"success": True, "message": "Logged out successfully"}
-
-    except Exception as e:
-        logger.error(f"Logout failed: {e}")
-        return {"success": False, "message": f"Logout failed: {str(e)}"}
-
-
 async def initialize() -> None:
     """Initialize the server components."""
 
-    # Initialize session manager
-    logger.info("Initializing session manager...")
-    await session_manager.initialize()
-
     # Get configuration info
     config_info = config.to_dict()
-    logger.info(f"Configuration loaded: {config_info}")
+    logger.debug(f"Configuration loaded: {config_info}")
 
 
 def main() -> None:
