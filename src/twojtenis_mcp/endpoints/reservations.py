@@ -1,7 +1,7 @@
 from typing import Any
 
 from ..client import TwojTenisClient
-from ..models import ApiErrorException
+from ..models import ApiErrorException, CourtBooking
 from ..schedule_parser import ScheduleParser
 from ..utils import validate_date, validate_time
 
@@ -187,6 +187,87 @@ class ReservationsEndpoint:
             return {
                 "success": False,
                 "message": f"Unexpected error while making reservation: {str(e)}",
+            }
+
+    async def make_bulk_reservation(
+        self,
+        session_id: str,
+        club_num: int,
+        sport_id: int,
+        court_bookings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Make multiple court reservations in a single request.
+
+        Args:
+            session_id: Authenticated user's session ID
+            club_num: Club number
+            sport_id: Sport identifier
+            court_bookings: List of booking dictionaries with keys:
+                - court: Court number as string (e.g., "1", "2", "3")
+                - date: Date in DD.MM.YYYY format (e.g., "27.12.2025")
+                - time_start: Start time in HH:MM format (e.g., "21:00")
+                - time_end: End time in HH:MM format (e.g., "21:30")
+
+        Returns:
+            Result dictionary with success status and message
+        """
+        if not court_bookings:
+            return {
+                "success": False,
+                "message": "No bookings provided. At least one booking is required.",
+            }
+
+        # Validate all bookings
+        for booking in court_bookings:
+            if not validate_date(booking.get("date", "")):
+                return {
+                    "success": False,
+                    "message": "Invalid date format in booking. Use DD.MM.YYYY format.",
+                }
+            if not validate_time(booking.get("time_start", "")) or not validate_time(
+                booking.get("time_end", "")
+            ):
+                return {
+                    "success": False,
+                    "message": "Invalid time format in booking. Use HH:MM format.",
+                }
+
+        try:
+            # Convert dicts to CourtBooking models
+            booking_models = [CourtBooking(**b) for b in court_bookings]
+
+            booking_id = await self.client.with_session_retry(
+                self.client.make_bulk_reservation,
+                session_id=session_id,
+                club_num=club_num,
+                sport_id=sport_id,
+                court_bookings=booking_models,
+            )
+
+            if booking_id:
+                return {
+                    "success": True,
+                    "message": f"Bulk reservation made for {len(court_bookings)} courts",
+                    "reservation": {
+                        "booking_id": booking_id,
+                        "club_num": club_num,
+                        "count": len(court_bookings),
+                        "bookings": court_bookings,
+                        "sport_id": sport_id,
+                    },
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to make bulk reservation. One or more courts might be unavailable.",
+                }
+
+        except ApiErrorException as e:
+            return {"success": False, "message": f"Bulk reservation failed: {e.message}"}
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Unexpected error while making bulk reservation: {str(e)}",
             }
 
     async def delete_reservation(

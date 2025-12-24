@@ -232,6 +232,62 @@ async def delete_reservation(session_id: str, booking_id: str) -> dict[str, Any]
 
 
 @mcp.tool()
+async def put_bulk_reservation(
+    session_id: str,
+    club_id: str,
+    sport_id: int,
+    court_bookings: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Make multiple court reservations in a single request.
+
+    Args:
+        session_id: Logged user session ID (call login to retrieve)
+        club_id: Club identifier (e.g., 'blonia_sport')
+        sport_id: Sport ID (84 for badminton, 70 for tennis)
+        court_bookings: List of booking dictionaries, each containing:
+            - court: Court number as string (e.g., "1", "2", "3")
+            - date: Date in DD.MM.YYYY format (e.g., "27.12.2025")
+            - time_start: Start time in HH:MM format (e.g., "21:00")
+            - time_end: End time in HH:MM format (e.g., "21:30")
+
+    Returns:
+        Reservation result with success status and details
+
+    Example:
+        court_bookings = [
+            {"court": "1", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"},
+            {"court": "2", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"}
+        ]
+    """
+    try:
+        club = await clubs_endpoint.get_club_by_id(club_id)
+        if not club:
+            return {"success": False, "message": f"Error: unknown club {club_id}"}
+
+        result = await reservations_endpoint.make_bulk_reservation(
+            session_id=session_id,
+            club_num=club.num,
+            sport_id=sport_id,
+            court_bookings=court_bookings,
+        )
+
+        if result["success"]:
+            logger.debug(
+                f"Bulk reservation for {session_id}, club: {club_id}, {len(court_bookings)} bookings"
+            )
+        else:
+            logger.warning(f"Bulk reservation failed: {result['message']}")
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            f"Error making bulk reservation for {session_id}, club: {club_id}, sport {sport_id}: {e}"
+        )
+        return {"success": False, "message": f"Error: {str(e)}"}
+
+
+@mcp.tool()
 async def login(email: str, password: str) -> dict[str, Any]:
     """Initiate authentication with TwojTenis.pl
 

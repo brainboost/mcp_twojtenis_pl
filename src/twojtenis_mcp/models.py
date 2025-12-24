@@ -97,3 +97,12 @@ class DeleteReservationRequest(BaseModel):
     court_number: str = Field(..., description="Court number")
     date: str = Field(..., description="Date in DD.MM.YYYY format")
     hour: str = Field(..., description="Hour in HH:MM format")
+
+
+class CourtBooking(BaseModel):
+    """Represents a single court booking for bulk reservations."""
+
+    court: str = Field(..., description="Court number as string (e.g., '1', '2', '3')")
+    date: str = Field(..., description="Date in DD.MM.YYYY format (e.g., '27.12.2025')")
+    time_start: str = Field(..., description="Start time in HH:MM format (e.g., '21:00')")
+    time_end: str = Field(..., description="End time in HH:MM format (e.g., '21:30')")

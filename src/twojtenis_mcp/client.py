@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 
 from .config import config
-from .models import ApiErrorException
+from .models import ApiErrorException, CourtBooking
 from .utils import extract_id_from_url
 
 
@@ -405,6 +405,69 @@ class TwojTenisClient:
             "action": "add_rsv",
             "club_id": club_num,
         }
+
+        headers = {
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
+            "Priority": "u=0, i",
+            "TE": "trailers",
+        }
+
+        _, _headers = await self._make_request(
+            sessid=session_id,
+            method="POST",
+            url=url,
+            form_data=form_data,
+            headers=headers,
+        )
+        if _headers is not None:
+            booking_id = extract_id_from_url(_headers.get("location", ""))
+            return booking_id
+        return None
+
+    async def make_bulk_reservation(
+        self,
+        session_id: str,
+        club_num: int,
+        sport_id: int,
+        court_bookings: list[CourtBooking],
+    ) -> str | None:
+        """Make multiple court reservations in a single request.
+
+        Args:
+            session_id: Logged user's session ID
+            club_num: Club number
+            sport_id: Sport ID
+            court_bookings: List of court bookings with court, date, time_start, time_end
+
+        Returns:
+            Reservation ID if reservation successful, None otherwise
+        """
+        url = f"{self.base_url}/pl/rsv/make.html"
+
+        # Build form data with numbered suffixes for each booking
+        form_data: dict[str, Any] = {
+            "back_to": "g",
+            "action": "add_rsv",
+            "club_id": club_num,
+        }
+
+        for i, booking in enumerate(court_bookings, start=1):
+            suffix = f"_{i}"
+            form_data[f"rsv_usernote{suffix}"] = ""
+            form_data[f"rsv_date{suffix}"] = booking.date
+            form_data[f"rsv_sport{suffix}"] = sport_id
+            form_data[f"rsv_cort{suffix}"] = booking.court
+            form_data[f"rsv_hourfrom{suffix}"] = booking.time_start
+            form_data[f"rsv_hourto{suffix}"] = booking.time_end
+            form_data[f"rsv_price{suffix}"] = "50"
+            form_data[f"rsv_dis{suffix}"] = "0"
+            form_data[f"rsv_disu{suffix}"] = ""
+            form_data[f"rsv_dist{suffix}"] = ""
 
         headers = {
             "Upgrade-Insecure-Requests": "1",

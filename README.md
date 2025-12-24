@@ -94,10 +94,32 @@ The server provides the following MCP tools:
  **get_all_sports()** - Get list of all supported sport IDs
  **get_club_schedule(club_id, sport_id, date)** - Get court availability schedule
  **get_reservations()** - Get user's current reservations
- **put_reservation(club_id, court_number, date, hour, sport_id)** - Make a reservation
+ **put_reservation(club_id, court_number, date, hour, sport_id)** - Make a single reservation
+ **put_bulk_reservation(club_id, sport_id, court_bookings)** - Make multiple reservations in one request
  **delete_reservation(club_id, court_number, date, hour)** - Delete a reservation
  **check_availability(club_id, sport_id, court_number, date, hour)** - Check court availability
  **get_available_slots(club_id, sport_id, date, court_number)** - Get all available slots
+
+#### Bulk Reservation
+
+The `put_bulk_reservation` tool allows booking multiple courts in a single API call. Each booking is a dictionary with the following fields:
+
+- `court`: Court number as string (e.g., "1", "2", "3")
+- `date`: Date in DD.MM.YYYY format (e.g., "27.12.2025")
+- `time_start`: Start time in HH:MM format (e.g., "21:00")
+- `time_end`: End time in HH:MM format (e.g., "21:30")
+
+Example:
+```json
+{
+  "club_id": "blonia_sport",
+  "sport_id": 84,
+  "court_bookings": [
+    {"court": "1", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"},
+    {"court": "2", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"}
+  ]
+}
+```
 
 
 ### Testing with MCP Inspector
