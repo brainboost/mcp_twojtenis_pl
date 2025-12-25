@@ -158,7 +158,10 @@ def retry_on_failure(max_attempts: int = 3, delay: float = 1.0):
     return decorator
 
 
-def extract_id_from_url(url: str) -> str:
+def extract_id_from_url(url: str) -> str | None:
     """Parse URL to extract ID from the file name (without extension)"""
-    id = re.search(url_regex, url).group(1)  # type: ignore
+    loc = re.search(url_regex, url)
+    if not loc:
+        return None
+    id = loc.group(1)  # type: ignore
     return str(id)

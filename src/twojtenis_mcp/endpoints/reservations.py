@@ -211,7 +211,7 @@ class ReservationsEndpoint:
         Returns:
             Result dictionary with success status and message
         """
-        if not court_bookings:
+        if not court_bookings or len(court_bookings) == 0:
             return {
                 "success": False,
                 "message": "No bookings provided. At least one booking is required.",
@@ -219,37 +219,53 @@ class ReservationsEndpoint:
 
         # Validate all bookings
         for booking in court_bookings:
-            if not validate_date(booking.get("date", "")):
+            date = booking.get("date", "")
+            if not validate_date(date):
                 return {
                     "success": False,
                     "message": "Invalid date format in booking. Use DD.MM.YYYY format.",
                 }
-            if not validate_time(booking.get("time_start", "")) or not validate_time(
-                booking.get("time_end", "")
-            ):
+            time_start = booking.get("time_start", "")
+            time_end = booking.get("time_end", "")
+            if not validate_time(time_start) or not validate_time(time_end):
                 return {
                     "success": False,
                     "message": "Invalid time format in booking. Use HH:MM format.",
                 }
-
+            key = f"{date}_{time_start} - {time_end}"
+            booking["key"] = key
         try:
             # Convert dicts to CourtBooking models
             booking_models = [CourtBooking(**b) for b in court_bookings]
 
-            booking_id = await self.client.with_session_retry(
+            await self.client.with_session_retry(
                 self.client.make_bulk_reservation,
                 session_id=session_id,
                 club_num=club_num,
                 sport_id=sport_id,
                 court_bookings=booking_models,
             )
+            # get list of reservations
+            reservations = await self.get_reservations(session_id=session_id)
 
-            if booking_id:
+            # correspond reservation ids with bookings
+            booking_ids = {}
+            if reservations and len(reservations) != 0:
+                for booking in reservations:
+                    booking_ids[f"{booking['date']}_{booking['time']}"] = booking[
+                        "booking_id"
+                    ]
+                for court_booking in court_bookings:
+                    key = court_booking["key"]
+                    found_id = booking_ids[key]
+                    if found_id:
+                        court_booking["booking_id"] = found_id
+                    del court_booking["key"]
+
                 return {
                     "success": True,
                     "message": f"Bulk reservation made for {len(court_bookings)} courts",
                     "reservation": {
-                        "booking_id": booking_id,
                         "club_num": club_num,
                         "count": len(court_bookings),
                         "bookings": court_bookings,
@@ -263,7 +279,10 @@ class ReservationsEndpoint:
                 }
 
         except ApiErrorException as e:
-            return {"success": False, "message": f"Bulk reservation failed: {e.message}"}
+            return {
+                "success": False,
+                "message": f"Bulk reservation failed: {e.message}",
+            }
         except Exception as e:
             return {
                 "success": False,

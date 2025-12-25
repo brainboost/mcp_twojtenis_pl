@@ -425,8 +425,7 @@ class TwojTenisClient:
             headers=headers,
         )
         if _headers is not None:
-            booking_id = extract_id_from_url(_headers.get("location", ""))
-            return booking_id
+            return extract_id_from_url(_headers.get("location", ""))
         return None
 
     async def make_bulk_reservation(
@@ -435,7 +434,7 @@ class TwojTenisClient:
         club_num: int,
         sport_id: int,
         court_bookings: list[CourtBooking],
-    ) -> str | None:
+    ) -> None:
         """Make multiple court reservations in a single request.
 
         Args:
@@ -445,7 +444,7 @@ class TwojTenisClient:
             court_bookings: List of court bookings with court, date, time_start, time_end
 
         Returns:
-            Reservation ID if reservation successful, None otherwise
+            None (booking IDs must be fetched via get_reservations)
         """
         url = f"{self.base_url}/pl/rsv/make.html"
 
@@ -479,18 +478,13 @@ class TwojTenisClient:
             "Priority": "u=0, i",
             "TE": "trailers",
         }
-
-        _, _headers = await self._make_request(
+        await self._make_request(
             sessid=session_id,
             method="POST",
             url=url,
             form_data=form_data,
             headers=headers,
         )
-        if _headers is not None:
-            booking_id = extract_id_from_url(_headers.get("location", ""))
-            return booking_id
-        return None
 
     async def delete_reservation(
         self,
