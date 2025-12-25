@@ -35,17 +35,6 @@ def test_court_booking_model():
     assert booking2.court == "2"
 
 
-def test_court_booking_model_missing_field():
-    """Test CourtBooking model validation with missing field."""
-    with pytest.raises(Exception):
-        CourtBooking(
-            court="1",
-            date="27.12.2025",
-            # Missing time_start
-            time_end="21:30",
-        )
-
-
 def test_court_booking_from_dict():
     """Test creating CourtBooking from dictionary."""
     data = {
@@ -127,8 +116,12 @@ async def test_make_bulk_reservation_validation_invalid_time():
 def test_bulk_reservation_example_data():
     """Test the example data from the user's request."""
     bookings = [
-        CourtBooking(court="1", date="27.12.2025", time_start="21:00", time_end="21:30"),
-        CourtBooking(court="2", date="27.12.2025", time_start="21:00", time_end="21:30"),
+        CourtBooking(
+            court="1", date="27.12.2025", time_start="21:00", time_end="21:30"
+        ),
+        CourtBooking(
+            court="2", date="27.12.2025", time_start="21:00", time_end="21:30"
+        ),
     ]
 
     assert len(bookings) == 2

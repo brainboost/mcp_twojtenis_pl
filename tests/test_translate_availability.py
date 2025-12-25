@@ -53,7 +53,6 @@ def test_translate_availability():
     # Check if the result matches the expected output
     if result == expected_output:
         print("\n✅ Test PASSED!")
-        return True
     else:
         print("\n❌ Test FAILED!")
         print("Differences:")
@@ -62,7 +61,6 @@ def test_translate_availability():
                 print(
                     f"  {time}: expected {expected_output[time]}, got {result.get(time)}"
                 )
-        return False
 
 
 if __name__ == "__main__":

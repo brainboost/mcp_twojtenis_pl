@@ -1,6 +1,6 @@
 [project]
 name = "twojtenis-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for booking badminton and tennis courts via twojtenis.pl"
 authors = [{ name = "Sergei Vedishchev", email = "brainboost@gmail.com" }]
 readme = "README.md"
