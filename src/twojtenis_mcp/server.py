@@ -232,6 +232,35 @@ async def delete_reservation(session_id: str, booking_id: str) -> dict[str, Any]
 
 
 @mcp.tool()
+async def delete_all_reservations(session_id: str) -> dict[str, Any]:
+    """Delete all of the user's current court reservations.
+
+    Args:
+        session_id: Logged user session ID (call login to retrieve)
+
+    Returns:
+        Deletion result with success status, message, deleted count, and lists of deleted/failed booking IDs
+    """
+    try:
+        result = await reservations_endpoint.delete_all_reservations(
+            session_id=session_id
+        )
+
+        if result["success"]:
+            logger.debug(
+                f"Deleted {result['deleted_count']} reservation(s): {result.get('deleted_booking_ids', [])}"
+            )
+        else:
+            logger.warning(f"Delete all reservations failed: {result['message']}")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error deleting all reservations: {e}")
+        return {"success": False, "message": f"Error: {str(e)}"}
+
+
+@mcp.tool()
 async def put_bulk_reservation(
     session_id: str,
     club_id: str,

@@ -331,6 +331,82 @@ class ReservationsEndpoint:
                 "message": f"Reservation {booking_id} deletion failed. Unexpected error: {str(e)}",
             }
 
+    async def delete_all_reservations(self, session_id: str) -> dict[str, Any]:
+        """Delete all of the user's current reservations.
+
+        Args:
+            session_id: Authenticated user's session ID
+
+        Returns:
+            Result dictionary with success status, message, and list of deleted booking IDs
+        """
+        try:
+            # Get all user reservations
+            reservations = await self.get_reservations(session_id=session_id)
+
+            if not reservations:
+                return {
+                    "success": True,
+                    "message": "No reservations found to delete",
+                    "deleted_count": 0,
+                    "deleted_booking_ids": [],
+                }
+
+            # Delete each reservation
+            deleted_booking_ids = []
+            failed_deletions = []
+
+            for reservation in reservations:
+                booking_id = reservation.get("booking_id")
+                if booking_id:
+                    result = await self.client.with_session_retry(
+                        self.client.delete_reservation,
+                        session_id=session_id,
+                        booking_id=booking_id,
+                    )
+                    if result:
+                        deleted_booking_ids.append(booking_id)
+                    else:
+                        failed_deletions.append(booking_id)
+
+            # Prepare result message
+            total_count = len(reservations)
+            success_count = len(deleted_booking_ids)
+            failed_count = len(failed_deletions)
+
+            if failed_count == 0:
+                message = f"Successfully deleted all {success_count} reservation(s)"
+            elif success_count == 0:
+                message = f"Failed to delete any of the {total_count} reservation(s)"
+            else:
+                message = (
+                    f"Deleted {success_count} of {total_count} reservation(s). "
+                    f"{failed_count} deletion(s) failed: {failed_deletions}"
+                )
+
+            return {
+                "success": failed_count == 0,
+                "message": message,
+                "deleted_count": success_count,
+                "deleted_booking_ids": deleted_booking_ids,
+                "failed_booking_ids": failed_deletions,
+            }
+
+        except ApiErrorException as e:
+            return {
+                "success": False,
+                "message": f"Delete all reservations failed: {e.message}",
+                "deleted_count": 0,
+                "deleted_booking_ids": [],
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Delete all reservations failed. Unexpected error: {str(e)}",
+                "deleted_count": 0,
+                "deleted_booking_ids": [],
+            }
+
 
 # Global reservations endpoint instance
 reservations_endpoint = ReservationsEndpoint()

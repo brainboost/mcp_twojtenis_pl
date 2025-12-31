@@ -19,7 +19,7 @@ class TwojTenisClient:
         self.retry_delay = config.retry_delay
         self.static_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0",
-            "Accept": "*/*",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "Accept-Language": "en,pl;q=0.7,ru;q=0.3",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Connection": "keep-alive",
@@ -120,7 +120,7 @@ class TwojTenisClient:
                 code="NO_SESSION",
                 message="No active user session available",
             )
-        request_headers["Cookie"] = f"PHPSESSID={sessid}; CooAcc=1"
+        request_headers["Cookie"] = f"CooAcc=1; PHPSESSID={sessid}"
 
         request_data = None
         if form_data:
@@ -181,13 +181,14 @@ class TwojTenisClient:
         data = {
             "login": email,
             "pass": password,
-            "back_url": "/pl/home.html",
+            "back_url": "/pl/login.html",
             "action": "login",
         }
 
         headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
             "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/",
+            "Referer": f"{self.base_url}/pl/login.html",
             "Upgrade-Insecure-Requests": "1",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
@@ -195,6 +196,7 @@ class TwojTenisClient:
             "Sec-Fetch-User": "?1",
             "Sec-GPC": "1",
             "Priority": "u=0, i",
+            "TE": "trailers",
         }
         request_headers = dict(self.static_headers)
         request_headers.update(headers)
@@ -214,6 +216,12 @@ class TwojTenisClient:
 
                 if phpsessid_match:
                     phpsessid = phpsessid_match.group(1)
+                    request_headers["Cookie"] = f"PHPSESSID={phpsessid}"
+                    await client.request(
+                        method="GET",
+                        url=url,
+                        headers=request_headers,
+                    )
                     return phpsessid
 
             # No PHPSESSID found in response
