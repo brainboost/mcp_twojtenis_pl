@@ -255,16 +255,37 @@ class ReservationsEndpoint:
                     booking_ids[f"{booking['date']}_{booking['time']}"] = booking[
                         "booking_id"
                     ]
+
+                # Track successful and failed bookings
+                successful_count = 0
+
                 for court_booking in court_bookings:
                     key = court_booking["key"]
-                    found_id = booking_ids[key]
+                    found_id = booking_ids.get(key)
                     if found_id:
                         court_booking["booking_id"] = found_id
+                        court_booking["success"] = True
+                        successful_count += 1
+                    else:
+                        court_booking["success"] = False
                     del court_booking["key"]
 
+                # Determine overall success - at least one booking succeeded
+                overall_success = successful_count > 0
+
+                # Build appropriate message
+                if successful_count == len(court_bookings):
+                    message = f"Bulk reservation made for {successful_count} court(s)"
+                else:
+                    failed_count = len(court_bookings) - successful_count
+                    message = (
+                        f"Partial bulk reservation: {successful_count} court(s) booked, "
+                        f"{failed_count} court(s) unavailable"
+                    )
+
                 return {
-                    "success": True,
-                    "message": f"Bulk reservation made for {len(court_bookings)} courts",
+                    "success": overall_success,
+                    "message": message,
                     "reservation": {
                         "club_num": club_num,
                         "count": len(court_bookings),
@@ -273,9 +294,10 @@ class ReservationsEndpoint:
                     },
                 }
             else:
+                # No reservations found - all bookings failed, don't return reservation details
                 return {
                     "success": False,
-                    "message": "Failed to make bulk reservation. One or more courts might be unavailable.",
+                    "message": f"Failed to make bulk reservation. All {len(court_bookings)} court(s) are unavailable.",
                 }
 
         except ApiErrorException as e:
