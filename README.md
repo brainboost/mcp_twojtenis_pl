@@ -4,11 +4,10 @@ An MCP (Model Context Protocol) server for booking badminton and tennis courts v
 
 ## Features
 
-- **Authentication**: Secure login with session management
+- **Authentication**: Auth0 OIDC login with JWT tokens (Authorization Code + PKCE)
 - **Club Information**: Get list of available clubs
 - **Schedule Management**: View court availability schedules
 - **Reservation Management**: Book, view, and cancel court reservations
-- **Session Persistence**: Automatic session refresh and recovery
 - **Error Handling**: Robust error handling with retry logic
 - **Typed Entities**: Full type safety with Pydantic models
 - **SSE Support**: Real-time updates via Server-Sent Events
@@ -56,11 +55,17 @@ TWOJTENIS_PASSWORD=your_password
 # Optional
 TWOJTENIS_CONFIG_PATH=config/config.json
 TWOJTENIS_CLUBS_FILE=config/clubs.json
-TWOJTENIS_BASE_URL=https://www.twojtenis.pl
-TWOJTENIS_SESSION_LIFETIME=120  # minutes
-TWOJTENIS_REQUEST_TIMEOUT=30    
+TWOJTENIS_BASE_URL=https://old.twojtenis.pl
+TWOJTENIS_REQUEST_TIMEOUT=30
 TWOJTENIS_RETRY_ATTEMPTS=3
 TWOJTENIS_RETRY_DELAY=1.0
+
+# Auth0 (defaults are production values)
+# AUTH0_DOMAIN=twojtenis.eu.auth0.com
+# AUTH0_CLIENT_ID=86BsGMVf8imqTkuKVkxeW2FalNALsO4y
+# AUTH0_BROWSER_HEADLESS=true
+# AUTH0_BROWSER_TIMEOUT=60
+# AUTH0_BROWSER_EXECUTABLE_PATH=   # set on AWS Lambda
 ```
 
 ### Configuration File
@@ -71,8 +76,7 @@ Alternatively, create `config/config.json`:
 {
   "TWOJTENIS_EMAIL": "your_email@example.com",
   "TWOJTENIS_PASSWORD": "your_password",
-  "TWOJTENIS_SESSION_REFRESH": 60,
-  "TWOJTENIS_SESSION_LIFETIME": 120
+  "TWOJTENIS_REQUEST_TIMEOUT": 30
 }
 ```
 
@@ -121,6 +125,24 @@ Example:
 }
 ```
 
+
+## Auth0 Authentication
+
+`login_oauth(email, password)` drives Auth0's Universal Login form via headless
+Chromium (ROPC is disabled on this tenant) and exchanges the authorization code
+for JWT tokens. Refresh via `refresh_oauth_token` (pure HTTP, no browser).
+
+To enable browser auth:
+
+```bash
+uv pip install -e ".[browser-auth]"
+uv run playwright install chromium
+```
+
+If `playwright` is not installed, `login_oauth` returns `code: OAUTH_PLAYWRIGHT_REQUIRED`.
+
+For AWS Lambda, set `AUTH0_BROWSER_EXECUTABLE_PATH=/opt/chromium/chromium` and use
+the [Sparticuz/chromium](https://github.com/Sparticuz/chromium) Lambda layer.
 
 ### Testing with MCP Inspector
 
@@ -209,26 +231,21 @@ Common club IDs include:
 ### Basic Usage
 
 ```python
-# Login
-await login("user@example.com", "password")
+# Login with Auth0
+tokens = await login_oauth("user@example.com", "password")
+# tokens = {"success": True, "access_token": "...", "refresh_token": "...", "expires_at": ..., ...}
+
+# Refresh access token
+tokens = await refresh_oauth_token(tokens["refresh_token"])
 
 # Get clubs
-clubs = await get_clubs()
+clubs = await get_all_clubs()
 
 # Get schedule for badminton at Błonia Sport
 schedule = await get_club_schedule(
     club_id="blonia_sport",
     sport_id=84,  # Badminton
     date="24.09.2025"
-)
-
-# Check availability
-availability = await check_availability(
-    club_id="blonia_sport",
-    sport_id=84,
-    court_number=1,
-    date="24.09.2025",
-    hour="10:00"
 )
 
 # Make a reservation
@@ -240,14 +257,6 @@ result = await put_reservation(
     sport_id=84
 )
 ```
-
-### Session Management
-
-The server automatically manages sessions:
-- Sessions are stored in `config/session.json`
-- Sessions are refreshed every 60 seconds by default
-- Session lifetime is 120 minutes
-- Automatic re-authentication on session expiry
 
 ## Development
 
@@ -292,20 +301,14 @@ uvx ruff check src/
 
 ### Common Issues
 
-1. **Authentication Failed**: Check your email and password in the configuration
-2. **Session Expired**: The server will automatically re-authenticate
-3. **Network Errors**: Check your internet connection and the TwojTenis.pl website status
-4. **Invalid Date/Time**: Ensure dates are in DD.MM.YYYY format and times in HH:MM format
+1. **Authentication Failed**: Check your email and password; ensure `playwright` is installed (`uv pip install -e ".[browser-auth]" && uv run playwright install chromium`)
+2. **Network Errors**: Check your internet connection and the TwojTenis.pl website status
+3. **Invalid Date/Time**: Ensure dates are in DD.MM.YYYY format and times in HH:MM format
+4. **Lambda Deployment**: Set `AUTH0_BROWSER_EXECUTABLE_PATH=/opt/chromium/chromium` and include the Sparticuz/chromium layer
 
 ### Logging
 
 The server provides detailed logging. Check the console output for error messages and debugging information.
-
-### Session Issues
-
-If you encounter session issues:
-1. Delete `config/session.json`
-2. Restart the server
 
 ## Contributing
 
@@ -330,7 +333,7 @@ For issues and questions:
 
 ### Authentication
 
-The server uses PHPSESSID cookies for authentication. Sessions are automatically managed and refreshed.
+The server uses Auth0 OIDC (Authorization Code + PKCE) to obtain JWT access tokens. Call `login_oauth` once to get tokens; use `refresh_oauth_token` to renew without re-launching a browser.
 
 ### Error Handling
 
@@ -354,4 +357,4 @@ The server uses Pydantic models for type safety:
 - `Court`: Court availability
 - `Schedule`: Club schedule
 - `Reservation`: User reservation
-- `UserSession`: Session information
+- `ApiErrorException`: Structured error with `code` and `message` fields

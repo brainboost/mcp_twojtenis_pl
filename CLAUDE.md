@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TwojTenis MCP Server is a Python-based Model Context Protocol server that provides tools for booking badminton and tennis courts via twojtenis.pl. The service is stateless and uses PHPSESSID cookies for authentication.
+TwojTenis MCP Server is a Python-based Model Context Protocol server that provides tools for booking badminton and tennis courts via twojtenis.pl. Authentication uses Auth0 OIDC (Authorization Code + PKCE) to obtain JWTs for the new API.
 
 ## Development Commands
 
@@ -35,7 +35,7 @@ uvx ruff check src/
 
 ### Stateless Service Design
 
-The service is stateless - session management is handled by the client. Each MCP tool that requires authentication takes a `session_id` parameter (returned by `login()`). The server validates this PHPSESSID with each request.
+The service is stateless. Authentication is via Auth0 — `login_oauth` drives a headless browser to obtain JWT tokens. Booking tools are pending migration to the new Auth0-backed API.
 
 ### Layer Structure
 
@@ -53,7 +53,7 @@ server.py           # FastMCP server with @mcp.tool() decorators (MCP layer)
 
 ### Key Design Patterns
 
-1. **Authentication**: Login returns `session_id` (PHPSESSID) which must be passed to all protected endpoints
+1. **Authentication**: `login_oauth` returns `{access_token, refresh_token, expires_at, ...}` JWT for `api.twojetenis.pl`
 2. **Error Handling**: `ApiErrorException` with codes (`AUTHENTICATION_REQUIRED`, `HTTP_ERROR`, etc.)
 3. **Configuration Priority**: Environment variables > config file > defaults
 4. **Date Format**: DD.MM.YYYY (e.g., "24.09.2025")
@@ -67,13 +67,42 @@ Pre-configured clubs are in `config/clubs.json`.
 
 ## MCP Tool Signatures
 
-All tools requiring authentication must receive `session_id` as the first parameter:
+Authentication (Auth0):
 
-- `login(email, password)` -> Returns `{"success": bool, "session_id": str}`
+- `login_oauth(email, password)` → Returns `{"success": bool, "access_token": str, "refresh_token": str|None, "expires_at": int, ...}`
+- `refresh_oauth_token(refresh_token)` → Returns same shape as `login_oauth`
+
+Booking tools (pending migration to Auth0; currently use a legacy session parameter):
+
 - `get_club_schedule(session_id, club_id, sport_id, date)`
 - `get_reservations(session_id)`
 - `put_reservation(session_id, club_id, court_number, date, start_time, end_time, sport_id)`
 - `delete_reservation(session_id, booking_id)`
+
+## Auth0
+
+`login_oauth` returns `{access_token, refresh_token, expires_at, ...}` JWT for `api.twojetenis.pl`. Refresh via `refresh_oauth_token` (pure HTTP, no browser).
+
+Auth0 params (do **not** "fix" the typo in audience):
+
+| Param        | Value                                       |
+|--------------|---------------------------------------------|
+| Domain       | `twojtenis.eu.auth0.com`                    |
+| Client ID    | `86BsGMVf8imqTkuKVkxeW2FalNALsO4y`          |
+| Audience     | `https://api.twojetenis.pl` ← extra `e`     |
+| Redirect URI | `https://app.twojtenis.pl`                  |
+| Flow         | Authorization Code + PKCE (S256, no secret) |
+
+ROPC is disabled on this tenant; login requires headless Chromium via Playwright.
+
+To enable browser auth:
+
+```bash
+uv pip install -e ".[browser-auth]"
+uv run playwright install chromium
+```
+
+New error codes: `OAUTH_INVALID_CREDENTIALS`, `OAUTH_PLAYWRIGHT_REQUIRED`, `OAUTH_BROWSER_TIMEOUT`, `OAUTH_NETWORK_ERROR`, `OAUTH_UNEXPECTED`.
 
 ## Debugging in VSCode
 
