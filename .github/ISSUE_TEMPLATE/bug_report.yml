@@ -1,0 +1,109 @@
+name: Bug Report 🐛
+description: Report a bug or unexpected behavior
+title: "[BUG] Found a bug ..."
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Thanks for taking the time to report this bug!
+        
+        Before submitting, please check:
+        - You're using the latest version 
+        - This issue hasn't already been reported by searching [existing issues](https://github.com/brainboost/mcp_twojtenis_pl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug).
+        - This is a bug or support question, not a feature request
+        
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      description: Please confirm before submitting
+      options:
+        - label: I have searched [existing issues](https://github.com/brainboost/mcp_twojtenis_pl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug) and this hasn't been reported yet
+          required: true
+        - label: This is a single bug report (please file separate reports for different bugs)
+          required: true
+          
+  - type: textarea
+    id: actual
+    attributes:
+      label: What's Wrong?
+      description: Describe what's happening that shouldn't be
+      placeholder: |
+        When I try to [...]
+        The command fails immediately ...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected
+    attributes:
+      label: What Should Happen?
+      description: Describe the expected behavior
+      placeholder: The command should [...] successfully without errors
+    validations:
+      required: true
+      
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Error Messages/Logs
+      description: If you see any error messages, paste them here
+      placeholder: |
+        Paste any error output, stack traces, or relevant logs here.
+        This will be automatically formatted as code.
+      render: shell
+    validations:
+      required: false
+      
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: |
+        Please provide clear steps that anyone can follow to reproduce the issue.
+        If the issue involves specific files or code, please create a minimal example.
+      placeholder: |
+        1. Send the command:
+           ```
+           /book ...
+           ```
+        2. Error appears: "Unable to parse..."
+        
+        Note: The bug only happens when date contains ...
+    validations:
+      required: false
+      
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Is this a regression?
+      description: Did this work previously? 
+      options:
+        - "Yes, this worked previously"
+        - "No, this never worked"
+        - "I'm not sure"
+    validations:
+      required: true
+      
+  - type: input
+    id: working_version
+    attributes:
+      label: Last Working Date
+      description: If this is a regression, on what approximate date it's worked? This helps expedite a fix.
+      placeholder: "e.g. yesterday, a week ago, last month"
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: |
+        Anything else that might help us understand the issue?
+        - Screenshots (drag and drop images here)
+        - Links to external data demonstrating wrong AI answer
+      placeholder: Any additional context, screenshots, or information...
+    validations:
+      required: false
