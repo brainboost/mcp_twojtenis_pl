@@ -135,7 +135,8 @@ def test_bulk_reservation_example_data():
 @pytest.mark.asyncio
 async def test_make_bulk_reservation_partial_failure():
     """Test bulk reservation with partial failure (some courts unavailable)."""
-    from unittest.mock import AsyncMock, patch
+    from unittest.mock import patch
+
     from twojtenis_mcp.endpoints.reservations import reservations_endpoint
 
     # Mock get_reservations at the endpoint level to return only one successful booking

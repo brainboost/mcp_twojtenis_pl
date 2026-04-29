@@ -16,7 +16,11 @@ dependencies = [
     "sse-starlette>=1.6.0",
     "brotli>=1.1.0",
     "asyncio>=4.0.0",
+    "pyjwt>=2.8.0",
 ]
+
+[project.optional-dependencies]
+browser-auth = ["playwright>=1.40"]
 
 [project.scripts]
 twojtenis-mcp = "twojtenis_mcp.server:main"

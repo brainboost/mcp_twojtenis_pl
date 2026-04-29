@@ -20,8 +20,10 @@ from fastmcp import FastMCP
 # from .auth import session_manager
 from .config import config
 from .endpoints.clubs import clubs_endpoint
+from .endpoints.oauth import oauth_endpoint
 from .endpoints.reservations import reservations_endpoint
 from .endpoints.schedules import schedule_endpoint
+from .models import ApiErrorException
 
 # Configure logging
 logging.basicConfig(
@@ -317,24 +319,56 @@ async def put_bulk_reservation(
 
 
 @mcp.tool()
-async def login(email: str, password: str) -> dict[str, Any]:
-    """Initiate authentication with TwojTenis.pl
+async def login_oauth(email: str, password: str) -> dict[str, Any]:
+    """Authenticate with Auth0 to obtain a JWT for api.twojetenis.pl.
+
+    Use this for the new JSON API. For legacy old.twojtenis.pl, use `login`.
+    First call launches a headless browser to drive the Auth0 login form;
+    subsequent token renewals via `refresh_oauth_token` are pure HTTP.
 
     Returns:
-        Login result with success status:
-        session_id: Authenticated user's session ID
+        On success:
+            {
+              "success": True,
+              "access_token": "<jwt>",
+              "refresh_token": "<token>" | None,
+              "expires_at": <epoch_seconds>,
+              "token_type": "Bearer",
+              "scope": "openid profile email offline_access",
+              "id_token": "<jwt>" | None,
+            }
+        On failure:
+            {"success": False, "message": "...", "code": "..."}
     """
     try:
-        result = await reservations_endpoint.login(email=email, password=password)
-        if result:
-            logger.debug(f"Authentication succeeded for {email}. Session_id {result}")
-            return {"success": True, "message": "Authenticated", "session_id": result}
-        logger.error(f"Authentication failed for {email}")
-        return {"success": False, "message": "Authentication failed. Check credentials"}
-
+        tokens = await oauth_endpoint.login(email=email, password=password)
+        logger.debug(f"OAuth login succeeded for {email}")
+        return {"success": True, **tokens}
+    except ApiErrorException as e:
+        logger.error(f"OAuth login failed for {email}: {e.code} {e.message}")
+        return {"success": False, "message": e.message, "code": e.code}
     except Exception as e:
-        logger.error(f"Login initiation failed: {e}")
-        return {"success": False, "message": f"Login failed: {str(e)}"}
+        logger.error(f"OAuth login unexpected error for {email}: {e}")
+        return {"success": False, "message": f"Login failed: {e}"}
+
+
+@mcp.tool()
+async def refresh_oauth_token(refresh_token: str) -> dict[str, Any]:
+    """Refresh an Auth0 access token using a refresh token.
+
+    Returns the same shape as login_oauth on success. Does not launch a
+    browser — pure HTTP.
+    """
+    try:
+        tokens = await oauth_endpoint.refresh(refresh_token)
+        return {"success": True, **tokens}
+    except ApiErrorException as e:
+        logger.error(f"OAuth refresh failed: {e.code} {e.message}")
+        return {"success": False, "message": e.message, "code": e.code}
+    except Exception as e:
+        logger.error(f"OAuth refresh unexpected error: {e}")
+        return {"success": False, "message": f"Refresh failed: {e}"}
+
 
 
 async def initialize() -> None:

@@ -129,6 +129,47 @@ class Config:
         """Check if debug mode is enabled."""
         return self.get("TWOJTENIS_DEBUG", "false").lower() == "true"
 
+    @property
+    def auth0_domain(self) -> str:
+        """Get Auth0 domain."""
+        return self.get("AUTH0_DOMAIN", "twojtenis.eu.auth0.com")
+
+    @property
+    def auth0_client_id(self) -> str:
+        """Get Auth0 client ID."""
+        return self.get("AUTH0_CLIENT_ID", "86BsGMVf8imqTkuKVkxeW2FalNALsO4y")
+
+    @property
+    def auth0_audience(self) -> str:
+        # Note: production typo is intentional (api.twojetenis.pl, extra 'e')
+        return self.get("AUTH0_AUDIENCE", "https://api.twojetenis.pl")
+
+    @property
+    def auth0_redirect_uri(self) -> str:
+        """Get Auth0 redirect URI."""
+        return self.get("AUTH0_REDIRECT_URI", "https://app.twojtenis.pl")
+
+    @property
+    def auth0_scope(self) -> str:
+        """Get Auth0 scope."""
+        return self.get("AUTH0_SCOPE", "openid profile email offline_access")
+
+    @property
+    def auth0_browser_headless(self) -> bool:
+        """Whether to run the browser in headless mode."""
+        return self.get("AUTH0_BROWSER_HEADLESS", "true").lower() == "true"
+
+    @property
+    def auth0_browser_timeout(self) -> int:
+        """Timeout in seconds for the browser-driven login flow."""
+        return int(self.get("AUTH0_BROWSER_TIMEOUT", "60"))
+
+    @property
+    def auth0_browser_executable_path(self) -> str:
+        """Path to a custom Chromium binary (e.g. @sparticuz/chromium on Lambda).
+        Empty string means use the Playwright-managed browser."""
+        return self.get("AUTH0_BROWSER_EXECUTABLE_PATH", "")
+
     def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
@@ -141,6 +182,14 @@ class Config:
             "auth_timeout": self.auth_timeout,
             "enable_debug_mode": self.enable_debug_mode,
             "has_credentials": self.has_credentials,
+            "auth0_domain": self.auth0_domain,
+            "auth0_client_id": self.auth0_client_id,
+            "auth0_audience": self.auth0_audience,
+            "auth0_redirect_uri": self.auth0_redirect_uri,
+            "auth0_scope": self.auth0_scope,
+            "auth0_browser_headless": self.auth0_browser_headless,
+            "auth0_browser_timeout": self.auth0_browser_timeout,
+            "auth0_browser_executable_path": self.auth0_browser_executable_path,
         }
 
 

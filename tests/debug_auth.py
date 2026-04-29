@@ -1,7 +1,8 @@
 import asyncio
 
 from src.twojtenis_mcp.auth import SessionManager
-from twojtenis_mcp.client import TwojTenisClient
+
+from twojtenis_mcp.client import TwojTenisClient  # noqa: E402
 
 session_manager = SessionManager()
 
