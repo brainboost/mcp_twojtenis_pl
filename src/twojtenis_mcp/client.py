@@ -1,536 +1,88 @@
-import re
-from collections.abc import Callable
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, Mapping
 
 import httpx
 
-from .config import config
-from .models import ApiErrorException, CourtBooking
-from .utils import extract_id_from_url
+from .models import ApiErrorException
 
 
-class TwojTenisClient:
-    """HTTP client for interacting with TwojTenis.pl API."""
+class ApiClient:
+    """Thin async HTTP wrapper for the new TwojTenis JSON API.
 
-    def __init__(self):
-        """Initialize HTTP client."""
-        self.base_url = config.base_url
-        self.timeout = config.request_timeout
-        self.retry_delay = config.retry_delay
-        self.static_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "en,pl;q=0.7,ru;q=0.3",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Connection": "keep-alive",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-        }
+    Callers pass a fully-qualified URL plus the `access_token`. The client does
+    not own host routing — endpoints decide whether to hit the main API host
+    or a per-club tech-group host (resolved via `TechGroupResolver`).
+    """
 
-    async def with_session_retry(self, operation: Callable, *args, **kwargs) -> Any:
-        """Execute an operation with retry logic on server errors.
+    def __init__(self, main_base: str, timeout: float = 30.0) -> None:
+        self.main_base = main_base.rstrip("/")
+        self._timeout = timeout
 
-        Args:
-            operation: The async function to execute
-            *args: Arguments to pass to the operation
-            **kwargs: Keyword arguments to pass to the operation
-
-        Returns:
-            Result of the operation
-
-        Raises:
-            ApiErrorException: If operation fails after retry attempts
-        """
-        max_retries = config.retry_attempts | 1
-        last_exception = ApiErrorException(
-            code="UNKNOWN_ERROR",
-            message="Unknown error occurred",
-        )
-
-        for attempt in range(max_retries + 1):
-            try:
-                session = kwargs["session_id"]
-                if not session:
-                    raise ApiErrorException(
-                        code="AUTHENTICATION_REQUIRED",
-                        message="Authentication required. Use login and pass session_id to authenticate.",
-                    )
-                result = await operation(*args, **kwargs)
-                return result
-
-            except ApiErrorException as e:
-                last_exception = e
-
-                # If this is a server error and we haven't retried yet
-                if attempt < max_retries and (
-                    e.code
-                    in [
-                        "HTTP_ERROR",
-                        "REQUEST_FAILED",
-                    ]
-                    or (
-                        e.code == "HTTP_ERROR"
-                        and any(code in str(e) for code in ["500", "502", "503"])
-                    )
-                ):
-                    attempt += 1
-                    continue
-                else:
-                    # No more retries or non-retryable error
-                    break
-
-            except Exception as e:
-                last_exception = ApiErrorException(
-                    code="UNEXPECTED_ERROR",
-                    message=f"Unexpected error: {str(e)}",
-                )
-                break
-        raise last_exception
-
-    async def _make_request(
+    async def get(
         self,
-        sessid: str,
+        url: str,
+        *,
+        access_token: str | None,
+        params: Mapping[str, Any] | None = None,
+    ) -> Any:
+        return await self._send("GET", url, access_token, params=params)
+
+    async def post(
+        self,
+        url: str,
+        *,
+        access_token: str | None,
+        json: Any | None = None,
+    ) -> Any:
+        return await self._send("POST", url, access_token, json=json)
+
+    async def _send(
+        self,
         method: str,
         url: str,
-        headers: dict[str, str] | None = None,
-        params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
-        form_data: dict[str, Any] | None = None,
-    ) -> tuple[Any | None, dict[str, str] | None]:
-        """Make HTTP request
-
-        Args:
-            sessid: user's session ID for authentication
-            method: HTTP method
-            url: Request URL
-            headers: Request headers
-            params: URL parameters
-            data: Request data
-            form_data: Form data for multipart requests
-
-        Returns:
-            Tuple of (response_data, response_headers)
-        """
-        request_headers = dict(self.static_headers)
-        if headers:
-            request_headers.update(headers)
-
-        if not sessid:
-            raise ApiErrorException(
-                code="NO_SESSION",
-                message="No active user session available",
-            )
-        request_headers["Cookie"] = f"CooAcc=1; PHPSESSID={sessid}"
-
-        request_data = None
-        if form_data:
-            request_data = form_data
-        elif data:
-            request_data = data
-            if "Content-Type" not in request_headers:
-                request_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        access_token: str | None,
+        params: Mapping[str, Any] | None = None,
+        json: Any | None = None,
+    ) -> Any:
+        headers: dict[str, str] = {"Accept": "application/json"}
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+        if json is not None:
+            headers["Content-Type"] = "application/json"
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.request(
-                    method=method,
-                    url=url,
-                    headers=request_headers,
-                    params=params,
-                    data=request_data,
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                resp = await client.request(
+                    method, url, headers=headers, params=params, json=json
                 )
-
-                response_headers = dict(response.headers)
-                content_type = response.headers.get("content-type", "").lower()
-
-                if "application/json" in content_type:
-                    response_data = response.json()
-                elif "text/html" in content_type:
-                    response_data = response.text
-                else:
-                    response_data = response.content
-
-                if response.status_code >= 200 and response.status_code < 303:
-                    return response_data, response_headers
-
-                raise ApiErrorException(
-                    code="HTTP_ERROR",
-                    message=f"HTTP {response.status_code}",
-                    details={"response": response.text[:500]},
-                )
-
-        except httpx.RequestError as e:
+        except httpx.RequestError as exc:
             raise ApiErrorException(
-                code="REQUEST_FAILED",
-                message=f"{method} request failed for {url}",
-                details={"error": str(e)},
-            ) from e
+                "REQUEST_FAILED", f"network error: {exc}"
+            ) from exc
 
-    async def login(self, email: str, password: str) -> str | None:
-        """Login to TwojTenis.pl and return session ID.
-
-        Args:
-            email: User email
-            password: User password
-
-        Returns:
-            PHPSESSID if login successful, None otherwise
-        """
-        url = f"{self.base_url}/pl/login.html"
-
-        data = {
-            "login": email,
-            "pass": password,
-            "back_url": "/pl/login.html",
-            "action": "login",
-        }
-
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/login.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-        request_headers = dict(self.static_headers)
-        request_headers.update(headers)
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.request(
-                method="POST",
-                url=url,
-                headers=request_headers,
-                data=data,
+        if resp.status_code == 401:
+            raise ApiErrorException(
+                "AUTHENTICATION_REQUIRED",
+                "token rejected by server",
+                {"status": 401, "body": resp.text[:500]},
             )
-            # redirect after successful authentication
-            if response.status_code == 302:
-                response_headers = dict(response.headers)
-                # Extract PHPSESSID from Set-Cookie header
-                set_cookie = response_headers.get("set-cookie", "")  # type: ignore
-                phpsessid_match = re.search(r"PHPSESSID=([^;]+)", set_cookie)
+        if resp.status_code == 403:
+            raise ApiErrorException(
+                "FORBIDDEN",
+                "operation not permitted",
+                {"status": 403, "body": resp.text[:500]},
+            )
+        if resp.status_code >= 400:
+            raise ApiErrorException(
+                "HTTP_ERROR",
+                f"HTTP {resp.status_code}",
+                {"status": resp.status_code, "body": resp.text[:500]},
+            )
 
-                if phpsessid_match:
-                    phpsessid = phpsessid_match.group(1)
-                    request_headers["Cookie"] = f"PHPSESSID={phpsessid}"
-                    await client.request(
-                        method="GET",
-                        url=url,
-                        headers=request_headers,
-                    )
-                    return phpsessid
-
-            # No PHPSESSID found in response
+        if resp.status_code == 204 or not resp.content:
             return None
-
-    async def get_club_info(
-        self,
-        session_id: str,
-        club_id: str,
-    ) -> str | None:
-        """Get club's information, working hours table.
-
-        Args:
-            session_id: Logged user's session ID
-            club_id: Club identifier
-
-        Returns:
-            Club information
-        """
-
-        url = f"{self.base_url}/pl/kluby/{club_id}/courts_list.html"
-        headers = {
-            "Referer": f"{self.base_url}/pl/home.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-        }
-        response_data, _ = await self._make_request(
-            sessid=session_id,
-            method="GET",
-            url=url,
-            headers=headers,
-        )
-        return response_data
-
-    async def get_club_schedule(
-        self,
-        session_id: str,
-        club_id: str,
-        sport_id: int,
-        date: str,
-    ) -> str | None:
-        """Get club schedule for specific date and sport.
-
-        Args:
-            session_id: Logged user's session ID
-            club_id: Club identifier
-            sport_id: Sport ID
-            date: Date in DD.MM.YYYY format
-
-        Returns:
-            Schedule data if successful, None otherwise
-        """
-        url = f"{self.base_url}/ajax.php?load=courts_list"
-
-        data = {
-            "date": date,
-            "club_url": club_id,
-            "page": "NaN",
-            "spr": sport_id,
-            "zsh": "0",
-            "tz": "0",
-        }
-
-        headers = {
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/kluby/{club_id}.html",
-            "X-Requested-With": "XMLHttpRequest",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-GPC": "1",
-            "TE": "trailers",
-        }
-
-        response_data, _ = await self._make_request(
-            sessid=session_id,
-            method="POST",
-            url=url,
-            data=data,
-            headers=headers,
-        )
-        return response_data
-
-    async def get_reservations(self, session_id: str) -> str | None:
-        """Get user's current reservations.
-
-        Args:
-            session_id: Logged user's session ID
-
-        Returns:
-            HTML response with reservations if successful, None otherwise
-        """
-        url = f"{self.base_url}/pl/dashboard/reservations.html"
-
-        headers = {
-            "Referer": f"{self.base_url}/pl/dashboard/reservations.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-        response_data, _ = await self._make_request(
-            sessid=session_id,
-            method="GET",
-            url=url,
-            headers=headers,
-        )
-        return response_data
-
-    async def get_reservation(self, session_id: str, booking_id: str) -> str | None:
-        """
-        Get user's reservation by ID
-
-        Args:
-            session_id: Logged user's session ID
-            booking_id: Reservation ID
-
-        Returns:
-            HTML response with reservations if successful, None otherwise
-        """
-        url = f"{self.base_url}/pl/rsv/show/{booking_id}.html"
-
-        headers = {
-            "Referer": f"{self.base_url}/pl/dashboard/reservations/past.html",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-
-        response_data, _headers = await self._make_request(
-            sessid=session_id,
-            method="GET",
-            url=url,
-            headers=headers,
-        )
-        return response_data
-
-    async def make_reservation(
-        self,
-        session_id: str,
-        club_num: int,
-        sport_id: int,
-        court_number: int,
-        date: str,
-        start_time: str,
-        end_time: str,
-    ) -> str | None:
-        """Make a court reservation.
-
-        Args:
-            session_id: Logged user's session ID
-            club_num: Club number
-            sport_id: Sport ID
-            court_number: Court number starting from 1
-            date: Date in DD.MM.YYYY format
-            start_time: Start time in HH:MM format
-            end_time: End time in HH:MM format
-
-        Returns:
-            Reservation ID if reservation successful, None otherwise
-        """
-        url = f"{self.base_url}/pl/rsv/make.html"
-        form_data = {
-            "rsv_usernote_1": "",
-            "rsv_date_1": date,
-            "rsv_sport_1": sport_id,
-            "rsv_cort_1": court_number,
-            "rsv_hourfrom_1": start_time,
-            "rsv_hourto_1": end_time,
-            "rsv_price_1": "100",
-            "rsv_dis_1": "0",
-            "rsv_disu_1": "",
-            "rsv_dist_1": "",
-            "back_to": "e",
-            "action": "add_rsv",
-            "club_id": club_num,
-        }
-
-        headers = {
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-
-        _, _headers = await self._make_request(
-            sessid=session_id,
-            method="POST",
-            url=url,
-            form_data=form_data,
-            headers=headers,
-        )
-        if _headers is not None:
-            return extract_id_from_url(_headers.get("location", ""))
-        return None
-
-    async def make_bulk_reservation(
-        self,
-        session_id: str,
-        club_num: int,
-        sport_id: int,
-        court_bookings: list[CourtBooking],
-    ) -> None:
-        """Make multiple court reservations in a single request.
-
-        Args:
-            session_id: Logged user's session ID
-            club_num: Club number
-            sport_id: Sport ID
-            court_bookings: List of court bookings with court, date, time_start, time_end
-
-        Returns:
-            None (booking IDs must be fetched via get_reservations)
-        """
-        url = f"{self.base_url}/pl/rsv/make.html"
-
-        # Build form data with numbered suffixes for each booking
-        form_data: dict[str, Any] = {
-            "back_to": "g",
-            "action": "add_rsv",
-            "club_id": club_num,
-        }
-
-        for i, booking in enumerate(court_bookings, start=1):
-            suffix = f"_{i}"
-            form_data[f"rsv_usernote{suffix}"] = ""
-            form_data[f"rsv_date{suffix}"] = booking.date
-            form_data[f"rsv_sport{suffix}"] = sport_id
-            form_data[f"rsv_cort{suffix}"] = booking.court
-            form_data[f"rsv_hourfrom{suffix}"] = booking.time_start
-            form_data[f"rsv_hourto{suffix}"] = booking.time_end
-            form_data[f"rsv_price{suffix}"] = "50"
-            form_data[f"rsv_dis{suffix}"] = "0"
-            form_data[f"rsv_disu{suffix}"] = ""
-            form_data[f"rsv_dist{suffix}"] = ""
-
-        headers = {
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "Priority": "u=0, i",
-            "TE": "trailers",
-        }
-        await self._make_request(
-            sessid=session_id,
-            method="POST",
-            url=url,
-            form_data=form_data,
-            headers=headers,
-        )
-
-    async def delete_reservation(
-        self,
-        session_id: str,
-        booking_id: str,
-    ) -> bool:
-        """Delete a court reservation.
-
-        Args:
-            book_id: Reservation ID
-
-        Returns:
-            True if deletion successful, False otherwise
-        """
-        if not booking_id:
-            return False
-
-        url = f"{self.base_url}/pl/rsv/del/{booking_id}.html?back=/pl/dashboard/reservations.html"
-
-        headers = {
-            "Origin": self.base_url,
-            "Referer": f"{self.base_url}/pl/rsv/show/{booking_id}.html",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Sec-GPC": "1",
-            "TE": "trailers",
-        }
-
-        try:
-            _response_data, _ = await self._make_request(
-                sessid=session_id,
-                method="GET",
-                url=url,
-                headers=headers,
-            )
-            return True
-
-        except ApiErrorException:
-            return False
+        ct = resp.headers.get("content-type", "")
+        if "application/json" in ct:
+            return resp.json()
+        return resp.text
