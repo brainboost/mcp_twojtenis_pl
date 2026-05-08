@@ -68,3 +68,33 @@ class ReservationsEndpoint:
         url = f"{tech}/api/v1/Bookings/my/{booking_id}/cancel"
         await self._client.post(url, access_token=access_token, json={})
         return {"success": True, "message": "reservation cancelled"}
+
+    async def delete_all_reservations(self, *, access_token: str) -> dict[str, Any]:
+        today = date.today()
+        bookings = await self.get_reservations(
+            access_token=access_token,
+            from_iso=today.isoformat(),
+            to_iso=(today + timedelta(days=90)).isoformat(),
+        )
+        deleted: list[str] = []
+        errors: list[dict[str, str]] = []
+        for b in bookings:
+            try:
+                tech = await self._resolver.service_url_for_club(
+                    b["club_id"], access_token=access_token
+                )
+                await self._client.post(
+                    f"{tech}/api/v1/Bookings/my/{b['id']}/cancel",
+                    access_token=access_token,
+                    json={},
+                )
+                deleted.append(b["id"])
+            except Exception as exc:
+                errors.append({"booking_id": b["id"], "error": str(exc)})
+        return {
+            "success": not errors,
+            "message": f"cancelled {len(deleted)} of {len(bookings)} reservations",
+            "deleted_count": len(deleted),
+            "deleted_booking_ids": deleted,
+            "errors": errors,
+        }

@@ -118,3 +118,34 @@ async def test_delete_reservation_when_missing(monkeypatch):
     ep = ReservationsEndpoint(client, TechGroupResolver(client))
     out = await ep.delete_reservation(booking_id="ghost", access_token="t")
     assert out["success"] is False
+
+
+@pytest.mark.asyncio
+async def test_delete_all(monkeypatch):
+    cancels: list[str] = []
+
+    async def fake_get(self, url, *, access_token, params=None):
+        if "/technical-groups" in url:
+            return [{"id": "TG", "serviceUrl": "https://tech", "name": "TG"}]
+        if "/bookings/my" in url:
+            return [
+                {**SAMPLE_BOOKING, "id": "b1"},
+                {**SAMPLE_BOOKING, "id": "b2"},
+            ]
+        if "/technical-group" in url:
+            return {"id": "TG", "serviceUrl": "https://tech", "name": "TG"}
+        raise AssertionError(url)
+
+    async def fake_post(self, url, *, access_token, json=None):
+        cancels.append(url)
+        return None
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    monkeypatch.setattr(ApiClient, "post", fake_post)
+    client = ApiClient(main_base="https://main")
+    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    out = await ep.delete_all_reservations(access_token="t")
+    assert out["success"] is True
+    assert out["deleted_count"] == 2
+    assert sorted(out["deleted_booking_ids"]) == ["b1", "b2"]
+    assert len(cancels) == 2
