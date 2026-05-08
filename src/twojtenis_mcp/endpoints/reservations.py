@@ -229,6 +229,82 @@ class ReservationsEndpoint:
             },
         }
 
+    async def make_bulk_reservation(
+        self,
+        *,
+        club_id: str,
+        court_bookings: list[dict[str, Any]],
+        access_token: str,
+    ) -> dict[str, Any]:
+        if not court_bookings:
+            raise ApiErrorException(
+                "VALIDATION_ERROR", "court_bookings cannot be empty"
+            )
+        profile = await self._profile(access_token=access_token)
+        player = await self._player_in_club(
+            club_id=club_id, auth0_sub=profile["id"], access_token=access_token
+        )
+        items = []
+        for cb in court_bookings:
+            items.append(
+                await self._build_request_item(
+                    club_id=club_id,
+                    location_id=cb["location_id"],
+                    location_name=cb["location_name"],
+                    date=cb["date"],
+                    start_time=cb["start_time"],
+                    end_time=cb["end_time"],
+                    access_token=access_token,
+                )
+            )
+        clubs_ep = ClubsEndpoint(self._client)
+        club_dict = await clubs_ep.get_club_by_id(club_id, access_token=access_token)
+        booker_name = f"{profile['firstName']} {profile['lastName']}"
+        body = {
+            "requests": items,
+            "description": "",
+            "bookerId": player["id"],
+            "bookerName": booker_name,
+            "bookerType": 0,
+            "clubName": club_dict["name"] if club_dict else "",
+            "comment": {
+                "cachedAuthorName": booker_name,
+                "text": "",
+                "visibility": 2,
+            },
+            "bookerEmail": profile.get("email", ""),
+            "bookerPhone": profile.get("phoneNumber", ""),
+            "source": 0,
+            "trainerProfileName": "undefined undefined",
+        }
+        tech = await self._resolver.service_url_for_club(
+            club_id, access_token=access_token
+        )
+        created = (
+            await self._client.post(
+                f"{tech}/api/v1/Clubs/{club_id}/bookings",
+                access_token=access_token,
+                json=body,
+            )
+            or []
+        )
+        return {
+            "success": True,
+            "message": f"created {len(created)} reservation(s)",
+            "reservations": [
+                {
+                    "id": b["id"],
+                    "location_id": b["locationId"],
+                    "location_name": b.get("locationName"),
+                    "date": b["date"],
+                    "start_time": b["startTime"],
+                    "end_time": b["endTime"],
+                    "price": b.get("price"),
+                }
+                for b in created
+            ],
+        }
+
     async def delete_all_reservations(self, *, access_token: str) -> dict[str, Any]:
         today = date.today()
         bookings = await self.get_reservations(

@@ -292,3 +292,74 @@ async def test_make_reservation(monkeypatch):
     assert book_body["requests"][0]["startHour"] == "16:00:00"
     assert book_body["requests"][0]["endHour"] == "17:00:00"
     assert book_body["requests"][0]["locationName"] == "Badminton 2"
+
+
+@pytest.mark.asyncio
+async def test_make_bulk_reservation_sends_one_post_with_two_items(monkeypatch):
+    captured: dict[str, dict] = {}
+
+    async def fake_get(self, url, *, access_token, params=None):
+        if url.endswith("/api/v1/Players/me"):
+            return PROFILE
+        if "/players/auth0%7Cabc" in url:
+            return PLAYER_IN_CLUB
+        if "/technical-group" in url:
+            return {"id": "TG", "serviceUrl": "https://tech", "name": "TG"}
+        if url.endswith("/api/v1/Clubs"):
+            return [CLUB]
+        raise AssertionError(url)
+
+    async def fake_post(self, url, *, access_token, json=None):
+        captured[url] = json
+        if "calculate-price" in url:
+            return PRICE
+        if url.endswith("/api/v1/Clubs/c/bookings"):
+            return [
+                {**SAMPLE_BOOKING, "id": "b1", "startTime": "16:00:00"},
+                {**SAMPLE_BOOKING, "id": "b2", "startTime": "17:00:00"},
+            ]
+        raise AssertionError(url)
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    monkeypatch.setattr(ApiClient, "post", fake_post)
+    client = ApiClient(main_base="https://main")
+    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    out = await ep.make_bulk_reservation(
+        club_id="c",
+        court_bookings=[
+            {
+                "location_id": "loc",
+                "location_name": "Badminton 2",
+                "date": "2026-05-11",
+                "start_time": "16:00",
+                "end_time": "17:00",
+            },
+            {
+                "location_id": "loc",
+                "location_name": "Badminton 2",
+                "date": "2026-05-11",
+                "start_time": "17:00",
+                "end_time": "18:00",
+            },
+        ],
+        access_token="t",
+    )
+    assert out["success"] is True
+    assert len(out["reservations"]) == 2
+    book_body = captured["https://tech/api/v1/Clubs/c/bookings"]
+    assert len(book_body["requests"]) == 2
+    assert book_body["requests"][0]["startHour"] == "16:00:00"
+    assert book_body["requests"][1]["startHour"] == "17:00:00"
+
+
+@pytest.mark.asyncio
+async def test_make_bulk_reservation_rejects_empty():
+    from twojtenis_mcp.models import ApiErrorException
+
+    client = ApiClient(main_base="https://main")
+    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    with pytest.raises(ApiErrorException) as ei:
+        await ep.make_bulk_reservation(
+            club_id="c", court_bookings=[], access_token="t"
+        )
+    assert ei.value.code == "VALIDATION_ERROR"
