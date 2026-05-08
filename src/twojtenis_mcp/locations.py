@@ -4,33 +4,38 @@ from collections.abc import Iterable
 from typing import Any
 
 from .client import ApiClient
+from .models import Location
 
 
 class LocationsService:
-    """Court (location) UUID + name resolution.
+    """Court (location) discovery for a club.
 
-    The new API does not expose a dedicated locations endpoint. The canonical
-    set of court UUIDs for a club is derivable from the union of
-    `priceLists[*].rules[*].locations` in /Clubs/{id}. Court display names like
-    "Badminton 2" are not present in any list endpoint we have observed; we
-    learn them opportunistically from /bookings/my responses (which include
-    `locationName` per booking) and fall back to the bare UUID otherwise.
+    The canonical source is the `locations` field in `GET /api/v1/Clubs/{id}` —
+    each entry has `{id, name, shortName, hasLight, isEnabled, tags, sortNumber,
+    type, groupName}`. We expose that list directly and cache `id → name` for
+    callers that have only a UUID in hand.
     """
 
     def __init__(self, client: ApiClient) -> None:
         self._client = client
         self._names: dict[str, str] = {}
 
+    async def locations_for_club(
+        self, club_id: str, *, access_token: str
+    ) -> list[Location]:
+        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
+        details = await self._client.get(url, access_token=access_token) or {}
+        raw = details.get("locations") or []
+        locations = [Location.model_validate(item) for item in raw]
+        for loc in locations:
+            self._names[loc.id] = loc.name
+        return sorted(locations, key=lambda x: (x.sort_number, x.name))
+
     async def location_ids_for_club(
         self, club_id: str, *, access_token: str
     ) -> list[str]:
-        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
-        details = await self._client.get(url, access_token=access_token) or {}
-        ids: set[str] = set()
-        for pl in details.get("priceLists", []):
-            for rule in pl.get("rules", []):
-                ids.update(rule.get("locations", []))
-        return sorted(ids)
+        locations = await self.locations_for_club(club_id, access_token=access_token)
+        return [loc.id for loc in locations]
 
     def remember_names_from_bookings(
         self, bookings: Iterable[dict[str, Any]]

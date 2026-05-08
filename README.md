@@ -72,6 +72,7 @@ Booking — every tool takes `access_token` as the first arg:
 | Tool | Args | Returns |
 |------|------|---------|
 | `get_all_clubs` | `access_token` | `[{id, name, address, openHours, priceMin, priceMax, ...}]` |
+| `get_club_locations` | `access_token, club_id` | `[{id, name, short_name, tags, sort_number, type, has_light, ...}]` — courts at the club, with `id` and `name` ready for `put_reservation` |
 | `get_club_schedule` | `access_token, club_id, date` | `{success, data: {club_id, date, bookings, excludes}}` |
 | `get_reservations` | `access_token, from_date="", to_date=""` | list of bookings (default window: today..+90d) |
 | `get_reservation_details` | `access_token, booking_id` | `{success, reservation}` or `{success: False, message}` |

@@ -4,49 +4,74 @@ from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.locations import LocationsService
 
 
+CLUB_DETAILS_WITH_LOCATIONS = {
+    "id": "c",
+    "name": "Klub",
+    "owner": {},
+    "priceLists": [],
+    "exceptions": [],
+    "locations": [
+        {
+            "id": "loc-2",
+            "name": "Badminton 2",
+            "shortName": "B2",
+            "hasLight": True,
+            "isEnabled": True,
+            "tags": "Badminton;Indoor",
+            "sortNumber": 12,
+            "type": 1,
+            "groupName": None,
+        },
+        {
+            "id": "loc-1",
+            "name": "Kort nr 4",
+            "shortName": "kort 4",
+            "hasLight": True,
+            "isEnabled": True,
+            "tags": "Tennis;Hall",
+            "sortNumber": 4,
+            "type": 0,
+            "groupName": None,
+        },
+    ],
+}
+
+
 @pytest.mark.asyncio
-async def test_collect_uuids_from_pricelists(monkeypatch):
+async def test_locations_for_club_returns_sorted(monkeypatch):
     async def fake_get(self, url, *, access_token, params=None):
-        if url.endswith("/api/v1/Clubs/c"):
-            return {
-                "owner": {},
-                "priceLists": [
-                    {
-                        "id": "pl",
-                        "name": "x",
-                        "visible": True,
-                        "rules": [
-                            {
-                                "id": "r1",
-                                "locations": ["a", "b"],
-                                "startDay": 1,
-                                "endDay": 5,
-                                "startHour": "07:00:00",
-                                "endHour": "15:00:00",
-                                "price": 50,
-                                "onlinePaymentOption": 1,
-                            },
-                            {
-                                "id": "r2",
-                                "locations": ["b", "c"],
-                                "startDay": 1,
-                                "endDay": 5,
-                                "startHour": "15:00:00",
-                                "endHour": "23:00:00",
-                                "price": 80,
-                                "onlinePaymentOption": 1,
-                            },
-                        ],
-                    }
-                ],
-                "exceptions": [],
-            }
-        raise AssertionError(url)
+        assert url.endswith("/api/v1/Clubs/c")
+        return CLUB_DETAILS_WITH_LOCATIONS
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    svc = LocationsService(ApiClient(main_base="https://main"))
+    locs = await svc.locations_for_club("c", access_token="t")
+    assert [loc.id for loc in locs] == ["loc-1", "loc-2"]
+    assert locs[0].name == "Kort nr 4"
+    assert locs[1].name == "Badminton 2"
+
+
+@pytest.mark.asyncio
+async def test_locations_for_club_caches_names(monkeypatch):
+    async def fake_get(self, url, *, access_token, params=None):
+        return CLUB_DETAILS_WITH_LOCATIONS
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    svc = LocationsService(ApiClient(main_base="https://main"))
+    await svc.locations_for_club("c", access_token="t")
+    assert svc.name_for("loc-2") == "Badminton 2"
+    assert svc.name_for("unknown") == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_location_ids_for_club(monkeypatch):
+    async def fake_get(self, url, *, access_token, params=None):
+        return CLUB_DETAILS_WITH_LOCATIONS
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     svc = LocationsService(ApiClient(main_base="https://main"))
     ids = await svc.location_ids_for_club("c", access_token="t")
-    assert sorted(ids) == ["a", "b", "c"]
+    assert sorted(ids) == ["loc-1", "loc-2"]
 
 
 def test_name_lookup_from_known_bookings():

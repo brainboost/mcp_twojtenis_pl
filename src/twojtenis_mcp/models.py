@@ -75,6 +75,21 @@ class Club(BaseModel):
     medicover_discount: float | None = Field(default=None, alias="medicoverDiscount")
 
 
+class Location(BaseModel):
+    """A bookable court within a club. Returned in the `locations` field of /Clubs/{id}."""
+
+    model_config = _camel
+    id: str
+    name: str
+    short_name: str | None = Field(default=None, alias="shortName")
+    has_light: bool = Field(default=False, alias="hasLight")
+    is_enabled: bool = Field(default=True, alias="isEnabled")
+    tags: str | None = None
+    sort_number: int = Field(default=0, alias="sortNumber")
+    type: int = 0
+    group_name: str | None = Field(default=None, alias="groupName")
+
+
 class TechnicalGroup(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: str

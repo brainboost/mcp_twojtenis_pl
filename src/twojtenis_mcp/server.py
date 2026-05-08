@@ -11,6 +11,7 @@ from .endpoints.clubs import ClubsEndpoint
 from .endpoints.oauth import oauth_endpoint
 from .endpoints.reservations import ReservationsEndpoint
 from .endpoints.schedules import SchedulesEndpoint
+from .locations import LocationsService
 from .models import ApiErrorException
 from .tech_group import TechGroupResolver
 from .utils import to_iso_date
@@ -22,6 +23,7 @@ _resolver = TechGroupResolver(_client)
 _clubs = ClubsEndpoint(_client)
 _schedules = SchedulesEndpoint(_client, _resolver)
 _reservations = ReservationsEndpoint(_client, _resolver)
+_locations = LocationsService(_client)
 
 
 def _err(exc: ApiErrorException) -> dict[str, Any]:
@@ -38,6 +40,23 @@ async def get_all_clubs(access_token: str) -> Any:
     """List all clubs available on TwojTenis."""
     try:
         return await _clubs.list_clubs(access_token=access_token)
+    except ApiErrorException as exc:
+        return _err(exc)
+
+
+@mcp.tool()
+async def get_club_locations(access_token: str, club_id: str) -> Any:
+    """List the bookable courts (locations) at one club.
+
+    Returns each court's location_id (UUID, used in put_reservation),
+    location_name (display string, also used in put_reservation), tags,
+    sort order, light, surface type, etc.
+    """
+    try:
+        locs = await _locations.locations_for_club(
+            club_id, access_token=access_token
+        )
+        return [loc.model_dump(by_alias=False) for loc in locs]
     except ApiErrorException as exc:
         return _err(exc)
 
