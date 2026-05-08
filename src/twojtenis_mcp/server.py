@@ -1,391 +1,199 @@
-"""Main MCP server implementation for TwojTenis.pl."""
+from __future__ import annotations
 
-import asyncio
-import logging
-import sys
+from datetime import date, timedelta
 from typing import Any
-
-if "--debug" in sys.argv:
-    import debugpy
-
-    debugpy.listen(("127.0.0.1", 5678))
-    print(
-        "⏳ Waiting for debugger to attach on port 5678...", file=sys.stderr, flush=True
-    )
-    debugpy.wait_for_client()
-    print("✅ Debugger attached!", file=sys.stderr, flush=True)
 
 from fastmcp import FastMCP
 
-# from .auth import session_manager
+from .client import ApiClient
 from .config import config
-from .endpoints.clubs import clubs_endpoint
+from .endpoints.clubs import ClubsEndpoint
 from .endpoints.oauth import oauth_endpoint
-from .endpoints.reservations import reservations_endpoint
-from .endpoints.schedules import schedule_endpoint
+from .endpoints.reservations import ReservationsEndpoint
+from .endpoints.schedules import SchedulesEndpoint
 from .models import ApiErrorException
+from .tech_group import TechGroupResolver
+from .utils import to_iso_date
 
-# Configure logging
-logging.basicConfig(
-    filename="twojtenis_mcp.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+mcp = FastMCP("twojtenis-mcp")
 
-# Create MCP server
-mcp = FastMCP("TwojTenis Court Booking Server")
+_client = ApiClient(main_base=config.main_api_url, timeout=config.request_timeout)
+_resolver = TechGroupResolver(_client)
+_clubs = ClubsEndpoint(_client)
+_schedules = SchedulesEndpoint(_client, _resolver)
+_reservations = ReservationsEndpoint(_client, _resolver)
+
+
+def _err(exc: ApiErrorException) -> dict[str, Any]:
+    return {
+        "success": False,
+        "message": exc.message,
+        "code": exc.code,
+        "details": exc.details,
+    }
 
 
 @mcp.tool()
-async def get_all_clubs() -> list[dict[str, Any]]:
-    """Get list of available tennis and badminton clubs.
-
-    Returns:
-        List of clubs with their details
-    """
+async def get_all_clubs(access_token: str) -> Any:
+    """List all clubs available on TwojTenis."""
     try:
-        clubs = await clubs_endpoint.get_clubs()
-        logger.debug(f"Retrieved {len(clubs)} clubs")
-        return clubs
-
-    except Exception as e:
-        logger.error(f"Error getting clubs: {e}")
-        return []
-
-
-@mcp.tool()
-async def get_all_sports() -> dict[int, str]:
-    """Get list of all supported sports.
-
-    Returns:
-        List of sports with their IDs and names
-    """
-    sports: dict[int, str] = {}
-    for sport in clubs_endpoint.get_sports():
-        sports[sport["id"]] = sport["name"]
-    logger.debug(f"Retrieved {len(sports)} sports")
-    return sports
+        return await _clubs.list_clubs(access_token=access_token)
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
 async def get_club_schedule(
-    session_id: str, club_id: str, sport_id: int, date: str
+    access_token: str, club_id: str, date: str
 ) -> dict[str, Any]:
-    """Get court availability schedule for the specific club and sport.
-
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-        club_id: Club identifier (e.g., 'blonia_sport')
-        sport_id: Sport ID
-        date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
-
-    Returns:
-        Schedule data with court availability information
-    """
+    """Public schedule (occupied slots + excludes) for one club on one day."""
     try:
-        result = await schedule_endpoint.get_club_schedule(
-            session_id, club_id, sport_id, date
+        return await _schedules.get_club_schedule(
+            club_id=club_id, date=date, access_token=access_token
         )
-        logger.debug(
-            f"Retrieved {len(result)} results for club {club_id}, sport {sport_id}"
-        )
-        return result
-
-    except Exception as e:
-        logger.error(
-            f"Error getting club {club_id} schedule for sport {sport_id}, session_id {session_id}: {e}"
-        )
-        return {
-            "success": False,
-            "message": f"Error: {str(e)}",
-            "data": None,
-        }
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
-async def get_reservations(session_id: str) -> list[dict[str, Any]]:
-    """Get user's current court reservations.
+async def get_reservations(
+    access_token: str, from_date: str = "", to_date: str = ""
+) -> Any:
+    """List the user's bookings between from_date and to_date.
 
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-
-    Returns:
-        List of user's reservations
+    Date format: DD.MM.YYYY or YYYY-MM-DD. Defaults: today .. today+90 days.
     """
+    today = date.today()
     try:
-        reservations = await reservations_endpoint.get_reservations(session_id)
-        logger.debug(f"Retrieved {len(reservations)} reservations")
-        return reservations
-
-    except Exception as e:
-        logger.error(f"Error getting reservations: {e}")
-        return []
+        from_iso = to_iso_date(from_date) if from_date else today.isoformat()
+        to_iso = (
+            to_iso_date(to_date)
+            if to_date
+            else (today + timedelta(days=90)).isoformat()
+        )
+        return await _reservations.get_reservations(
+            access_token=access_token, from_iso=from_iso, to_iso=to_iso
+        )
+    except ApiErrorException as exc:
+        return _err(exc)
+    except ValueError as exc:
+        return _err(ApiErrorException("VALIDATION_ERROR", str(exc)))
 
 
 @mcp.tool()
-async def get_reservation_details(session_id: str, booking_id: str) -> dict[str, Any]:
-    """Get reservation details.
-
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-        booking_id: Reservation ID
-
-    Returns:
-        Reservation details
-    """
+async def get_reservation_details(access_token: str, booking_id: str) -> dict[str, Any]:
+    """Look up a single booking by ID (searches today-30d .. today+90d)."""
     try:
-        reservation = await reservations_endpoint.get_reservation_details(
-            session_id, booking_id
+        out = await _reservations.get_reservation_details(
+            booking_id=booking_id, access_token=access_token
         )
-        logger.debug(
-            f"Retrieved reservation details for {session_id}, booking_id: {booking_id}"
-        )
-        return reservation
-
-    except Exception as e:
-        logger.error(
-            f"Error getting reservation details for {session_id}, booking_id: {booking_id}: {e}"
-        )
-        return {}
+        if out is None:
+            return {"success": False, "message": "booking not found"}
+        return {"success": True, "reservation": out}
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
 async def put_reservation(
-    session_id: str,
+    access_token: str,
     club_id: str,
-    court_number: int,
+    location_id: str,
+    location_name: str,
     date: str,
     start_time: str,
     end_time: str,
-    sport_id: int,
 ) -> dict[str, Any]:
-    """Make a court reservation.
-
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-        club_id: Club identifier (e.g., 'blonia_sport')
-        court_number: Court number starting from 1 (e.g., 1, 2, 3...)
-        date: Date in DD.MM.YYYY format (e.g., '24.09.2025')
-        start_time: Start time in HH:MM format (e.g., '10:00')
-        end_time: End time in HH:MM format (e.g., '11:00')
-        sport_id: Sport ID (84 for badminton, 70 for tennis)
-
-    Returns:
-        Reservation result with success status and details
-    """
+    """Create one reservation for the given court (location) and time."""
     try:
-        club = await clubs_endpoint.get_club_by_id(club_id)
-        if not club:
-            return {"success": False, "message": f"Error: unknown club {club_id}"}
-
-        result = await reservations_endpoint.make_reservation(
-            session_id=session_id,
-            club_num=club.num,
-            court_number=court_number,
+        return await _reservations.make_reservation(
+            club_id=club_id,
+            location_id=location_id,
+            location_name=location_name,
             date=date,
             start_time=start_time,
             end_time=end_time,
-            sport_id=sport_id,
+            access_token=access_token,
         )
-
-        if result["success"]:
-            logger.debug(
-                f"Reservation made for {session_id}, club: {club_id}, court: {court_number}, {date} from {start_time} to {end_time}"
-            )
-        else:
-            logger.warning(f"Reservation failed: {result['message']}")
-
-        return result
-
-    except Exception as e:
-        logger.error(
-            f"Error making reservation for {session_id}, club: {club_id}, sport {sport_id}, on date {date}: {e}"
-        )
-        return {"success": False, "message": f"Error: {str(e)}"}
-
-
-@mcp.tool()
-async def delete_reservation(session_id: str, booking_id: str) -> dict[str, Any]:
-    """Delete a court reservation.
-
-    Args:
-        session_id: Logged user session ID
-        booking_id: Reservation identifier (string)
-
-    Returns:
-        Deletion result with success status and message
-    """
-    try:
-        result = await reservations_endpoint.delete_reservation(
-            session_id=session_id, booking_id=booking_id
-        )
-
-        if result["success"]:
-            logger.debug(f"Reservation deleted: {booking_id}")
-        else:
-            logger.warning(f"Reservation deletion failed: {result['message']}")
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Error deleting reservation: {e}")
-        return {"success": False, "message": f"Error: {str(e)}"}
-
-
-@mcp.tool()
-async def delete_all_reservations(session_id: str) -> dict[str, Any]:
-    """Delete all of the user's current court reservations.
-
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-
-    Returns:
-        Deletion result with success status, message, deleted count, and lists of deleted/failed booking IDs
-    """
-    try:
-        result = await reservations_endpoint.delete_all_reservations(
-            session_id=session_id
-        )
-
-        if result["success"]:
-            logger.debug(
-                f"Deleted {result['deleted_count']} reservation(s): {result.get('deleted_booking_ids', [])}"
-            )
-        else:
-            logger.warning(f"Delete all reservations failed: {result['message']}")
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Error deleting all reservations: {e}")
-        return {"success": False, "message": f"Error: {str(e)}"}
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
 async def put_bulk_reservation(
-    session_id: str,
-    club_id: str,
-    sport_id: int,
-    court_bookings: list[dict[str, Any]],
+    access_token: str, club_id: str, court_bookings: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    """Make multiple court reservations in a single request.
+    """Create multiple reservations in one server-side call.
 
-    Args:
-        session_id: Logged user session ID (call login to retrieve)
-        club_id: Club identifier (e.g., 'blonia_sport')
-        sport_id: Sport ID (84 for badminton, 70 for tennis)
-        court_bookings: List of booking dictionaries, each containing:
-            - court: Court number as string (e.g., "1", "2", "3")
-            - date: Date in DD.MM.YYYY format (e.g., "27.12.2025")
-            - time_start: Start time in HH:MM format (e.g., "21:00")
-            - time_end: End time in HH:MM format (e.g., "21:30")
-
-    Returns:
-        Reservation result with success status and details
-
-    Example:
-        court_bookings = [
-            {"court": "1", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"},
-            {"court": "2", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"}
-        ]
+    Each item in court_bookings:
+      {location_id, location_name, date, start_time, end_time}
     """
     try:
-        club = await clubs_endpoint.get_club_by_id(club_id)
-        if not club:
-            return {"success": False, "message": f"Error: unknown club {club_id}"}
-
-        result = await reservations_endpoint.make_bulk_reservation(
-            session_id=session_id,
-            club_num=club.num,
-            sport_id=sport_id,
+        return await _reservations.make_bulk_reservation(
+            club_id=club_id,
             court_bookings=court_bookings,
+            access_token=access_token,
         )
+    except ApiErrorException as exc:
+        return _err(exc)
 
-        if result["success"]:
-            logger.debug(
-                f"Bulk reservation for {session_id}, club: {club_id}, {len(court_bookings)} bookings"
-            )
-        else:
-            logger.warning(f"Bulk reservation failed: {result['message']}")
 
-        return result
-
-    except Exception as e:
-        logger.error(
-            f"Error making bulk reservation for {session_id}, club: {club_id}, sport {sport_id}: {e}"
+@mcp.tool()
+async def delete_reservation(access_token: str, booking_id: str) -> dict[str, Any]:
+    """Cancel a single reservation by ID."""
+    try:
+        return await _reservations.delete_reservation(
+            booking_id=booking_id, access_token=access_token
         )
-        return {"success": False, "message": f"Error: {str(e)}"}
+    except ApiErrorException as exc:
+        return _err(exc)
+
+
+@mcp.tool()
+async def delete_all_reservations(access_token: str) -> dict[str, Any]:
+    """Cancel every future reservation owned by the authenticated user."""
+    try:
+        return await _reservations.delete_all_reservations(access_token=access_token)
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
 async def login_oauth(email: str, password: str) -> dict[str, Any]:
-    """Authenticate with Auth0 to obtain a JWT for api.twojetenis.pl.
-
-    Use this for the new JSON API. For legacy old.twojtenis.pl, use `login`.
-    First call launches a headless browser to drive the Auth0 login form;
-    subsequent token renewals via `refresh_oauth_token` are pure HTTP.
-
-    Returns:
-        On success:
-            {
-              "success": True,
-              "access_token": "<jwt>",
-              "refresh_token": "<token>" | None,
-              "expires_at": <epoch_seconds>,
-              "token_type": "Bearer",
-              "scope": "openid profile email offline_access",
-              "id_token": "<jwt>" | None,
-            }
-        On failure:
-            {"success": False, "message": "...", "code": "..."}
-    """
+    """Drive an Auth0 headless-browser login and return a JWT access_token."""
     try:
-        tokens = await oauth_endpoint.login(email=email, password=password)
-        logger.debug(f"OAuth login succeeded for {email}")
-        return {"success": True, **tokens}
-    except ApiErrorException as e:
-        logger.error(f"OAuth login failed for {email}: {e.code} {e.message}")
-        return {"success": False, "message": e.message, "code": e.code}
-    except Exception as e:
-        logger.error(f"OAuth login unexpected error for {email}: {e}")
-        return {"success": False, "message": f"Login failed: {e}"}
+        result = await oauth_endpoint.login(email, password)
+        return {"success": True, **result}
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 @mcp.tool()
 async def refresh_oauth_token(refresh_token: str) -> dict[str, Any]:
-    """Refresh an Auth0 access token using a refresh token.
-
-    Returns the same shape as login_oauth on success. Does not launch a
-    browser — pure HTTP.
-    """
+    """Exchange a refresh_token for a new access_token (no browser)."""
     try:
-        tokens = await oauth_endpoint.refresh(refresh_token)
-        return {"success": True, **tokens}
-    except ApiErrorException as e:
-        logger.error(f"OAuth refresh failed: {e.code} {e.message}")
-        return {"success": False, "message": e.message, "code": e.code}
-    except Exception as e:
-        logger.error(f"OAuth refresh unexpected error: {e}")
-        return {"success": False, "message": f"Refresh failed: {e}"}
-
-
-
-async def initialize() -> None:
-    """Initialize the server components."""
-
-    # Get configuration info
-    config_info = config.to_dict()
-    logger.debug(f"Configuration loaded: {config_info}")
+        result = await oauth_endpoint.refresh(refresh_token)
+        return {"success": True, **result}
+    except ApiErrorException as exc:
+        return _err(exc)
 
 
 def main() -> None:
-    """Main server entry point."""
-    # Initialize async components first
-    asyncio.run(initialize())
+    import argparse
+    import sys
 
-    # Run the MCP server (synchronous)
-    mcp.run(show_banner=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
+    if args.debug:
+        try:
+            import debugpy
+
+            debugpy.listen(("localhost", 5678))
+            debugpy.wait_for_client()
+        except ImportError:
+            print("debugpy not installed", file=sys.stderr)
+    mcp.run()
 
 
 if __name__ == "__main__":
