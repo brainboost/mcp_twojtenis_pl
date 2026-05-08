@@ -33,6 +33,17 @@ CLUB_DETAILS_WITH_LOCATIONS = {
             "type": 0,
             "groupName": None,
         },
+        {
+            "id": "loc-3",
+            "name": "Padel 1",
+            "shortName": "P1",
+            "hasLight": True,
+            "isEnabled": True,
+            "tags": "Padel;Outdoor",
+            "sortNumber": 20,
+            "type": 8,
+            "groupName": None,
+        },
     ],
 }
 
@@ -46,9 +57,58 @@ async def test_locations_for_club_returns_sorted(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     svc = LocationsService(ApiClient(main_base="https://main"))
     locs = await svc.locations_for_club("c", access_token="t")
-    assert [loc.id for loc in locs] == ["loc-1", "loc-2"]
+    assert [loc.id for loc in locs] == ["loc-1", "loc-2", "loc-3"]
     assert locs[0].name == "Kort nr 4"
-    assert locs[1].name == "Badminton 2"
+    assert locs[0].sport == "tennis"
+    assert locs[1].sport == "badminton"
+    assert locs[2].sport == "padel"
+
+
+@pytest.mark.asyncio
+async def test_locations_filters_by_sport(monkeypatch):
+    async def fake_get(self, url, *, access_token, params=None):
+        return CLUB_DETAILS_WITH_LOCATIONS
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    svc = LocationsService(ApiClient(main_base="https://main"))
+    badminton = await svc.locations_for_club(
+        "c", access_token="t", sport="badminton"
+    )
+    assert [loc.id for loc in badminton] == ["loc-2"]
+    tennis = await svc.locations_for_club("c", access_token="t", sport="TENNIS")
+    assert [loc.id for loc in tennis] == ["loc-1"]
+    none = await svc.locations_for_club("c", access_token="t", sport="curling")
+    assert none == []
+
+
+def test_derive_sport_from_type_and_tags():
+    from twojtenis_mcp.models import derive_sport
+
+    assert derive_sport(0, "Tennis;Hard") == "tennis"
+    assert derive_sport(1, "Badminton") == "badminton"
+    assert derive_sport(8, "Padel") == "padel"
+    # Unknown type falls back to tag scan
+    assert derive_sport(99, "Squash") == "squash"
+    # Polish football tag
+    assert derive_sport(99, "PiłkaNożna;Boisko") == "football"
+    # No tag, no known type
+    assert derive_sport(99, None) is None
+    assert derive_sport(99, "WeirdTag") is None
+
+
+def test_location_serializes_with_sport_field():
+    from twojtenis_mcp.models import Location
+
+    loc = Location.model_validate(
+        {
+            "id": "x",
+            "name": "Padel 1",
+            "type": 8,
+            "tags": "Padel;Outdoor",
+        }
+    )
+    dumped = loc.model_dump(by_alias=False)
+    assert dumped["sport"] == "padel"
 
 
 @pytest.mark.asyncio
@@ -71,7 +131,7 @@ async def test_location_ids_for_club(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     svc = LocationsService(ApiClient(main_base="https://main"))
     ids = await svc.location_ids_for_club("c", access_token="t")
-    assert sorted(ids) == ["loc-1", "loc-2"]
+    assert sorted(ids) == ["loc-1", "loc-2", "loc-3"]
 
 
 def test_name_lookup_from_known_bookings():

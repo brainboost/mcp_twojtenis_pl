@@ -21,15 +21,30 @@ class LocationsService:
         self._names: dict[str, str] = {}
 
     async def locations_for_club(
-        self, club_id: str, *, access_token: str
+        self,
+        club_id: str,
+        *,
+        access_token: str,
+        sport: str | None = None,
     ) -> list[Location]:
+        """Return courts for a club, sorted by `sort_number, name`.
+
+        If `sport` is provided, only locations whose derived `sport` field
+        matches (case-insensitive) are returned. See `models.SPORT_BY_TYPE`
+        for known values: "tennis", "badminton", "padel", "squash",
+        "table_tennis", "fitness", "bowling", "football", "multi".
+        """
         url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
         details = await self._client.get(url, access_token=access_token) or {}
         raw = details.get("locations") or []
         locations = [Location.model_validate(item) for item in raw]
         for loc in locations:
             self._names[loc.id] = loc.name
-        return sorted(locations, key=lambda x: (x.sort_number, x.name))
+        locations.sort(key=lambda x: (x.sort_number, x.name))
+        if sport is not None:
+            wanted = sport.strip().lower()
+            locations = [loc for loc in locations if (loc.sport or "").lower() == wanted]
+        return locations
 
     async def location_ids_for_club(
         self, club_id: str, *, access_token: str

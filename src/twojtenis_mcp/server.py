@@ -45,16 +45,22 @@ async def get_all_clubs(access_token: str) -> Any:
 
 
 @mcp.tool()
-async def get_club_locations(access_token: str, club_id: str) -> Any:
+async def get_club_locations(
+    access_token: str, club_id: str, sport: str = ""
+) -> Any:
     """List the bookable courts (locations) at one club.
 
-    Returns each court's location_id (UUID, used in put_reservation),
-    location_name (display string, also used in put_reservation), tags,
-    sort order, light, surface type, etc.
+    Each entry has `id` (use as `location_id` in put_reservation), `name`
+    (use as `location_name`), `sport` (derived: "tennis", "badminton",
+    "padel", "squash", "table_tennis", "fitness", "bowling", "football",
+    "multi", or None if unknown), plus `short_name`, `tags`, `sort_number`,
+    `type`, `has_light`, `is_enabled`, `group_name`.
+
+    Pass `sport` to filter (case-insensitive). E.g. sport="badminton".
     """
     try:
         locs = await _locations.locations_for_club(
-            club_id, access_token=access_token
+            club_id, access_token=access_token, sport=sport or None
         )
         return [loc.model_dump(by_alias=False) for loc in locs]
     except ApiErrorException as exc:

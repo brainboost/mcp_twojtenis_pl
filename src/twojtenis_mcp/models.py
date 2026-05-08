@@ -1,6 +1,49 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+# Sport classification for `Location.type`. Derived from a survey of every club
+# returned by /api/v1/Clubs at the time of writing (2026-05-08). Update if new
+# values appear in the wild — `Location.sport` returns None for unknown types
+# rather than guessing.
+SPORT_BY_TYPE: dict[int, str] = {
+    0: "tennis",
+    1: "badminton",
+    2: "fitness",
+    4: "bowling",
+    5: "football",
+    7: "multi",
+    8: "padel",
+    11: "table_tennis",
+    12: "squash",
+}
+
+# Fallback: scan `tags` (semicolon-separated, case-insensitive) for known sport
+# keywords. Used only when `type` is not in SPORT_BY_TYPE.
+SPORT_BY_TAG: dict[str, str] = {
+    "tennis": "tennis",
+    "badminton": "badminton",
+    "padel": "padel",
+    "squash": "squash",
+    "tabletennis": "table_tennis",
+    "bowling": "bowling",
+    "fitness": "fitness",
+    "multi": "multi",
+    "piłkanożna": "football",
+    "pilkanozna": "football",
+    "football": "football",
+}
+
+
+def derive_sport(type_value: int, tags: str | None) -> str | None:
+    if type_value in SPORT_BY_TYPE:
+        return SPORT_BY_TYPE[type_value]
+    if tags:
+        for token in tags.split(";"):
+            key = token.strip().lower()
+            if key in SPORT_BY_TAG:
+                return SPORT_BY_TAG[key]
+    return None
 
 
 def _to_camel(snake: str) -> str:
@@ -76,7 +119,12 @@ class Club(BaseModel):
 
 
 class Location(BaseModel):
-    """A bookable court within a club. Returned in the `locations` field of /Clubs/{id}."""
+    """A bookable court within a club. Returned in the `locations` field of /Clubs/{id}.
+
+    Adds a derived `sport` field (e.g. "tennis", "badminton", "padel") inferred
+    from `type` with a fallback scan of `tags`. Returns None if the sport cannot
+    be classified — better than guessing.
+    """
 
     model_config = _camel
     id: str
@@ -88,6 +136,11 @@ class Location(BaseModel):
     sort_number: int = Field(default=0, alias="sortNumber")
     type: int = 0
     group_name: str | None = Field(default=None, alias="groupName")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def sport(self) -> str | None:
+        return derive_sport(self.type, self.tags)
 
 
 class TechnicalGroup(BaseModel):
