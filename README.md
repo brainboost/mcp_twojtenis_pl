@@ -1,262 +1,167 @@
 # TwojTenis MCP Server
 
-An MCP (Model Context Protocol) server for booking badminton and tennis courts via the twojtenis.pl website. This server provides a standardized interface for interacting with the court booking system, supporting both local (STDIO) and remote (SSE) communication modes.
+An MCP (Model Context Protocol) server for booking badminton and tennis courts via **app.twojtenis.pl**. Authentication uses Auth0 OIDC; every booking call hits the new Azure-hosted JSON API with a `Bearer <jwt>` header.
 
 ## Features
 
-- **Authentication**: Auth0 OIDC login with JWT tokens (Authorization Code + PKCE)
-- **Club Information**: Get list of available clubs
-- **Schedule Management**: View court availability schedules
-- **Reservation Management**: Book, view, and cancel court reservations
-- **Error Handling**: Robust error handling with retry logic
-- **Typed Entities**: Full type safety with Pydantic models
-- **SSE Support**: Real-time updates via Server-Sent Events
-- **Dual Mode**: Support for both STDIO and HTTP/SSE modes
+- **Auth0 login** — Authorization Code + PKCE via headless Chromium; returns JWT access + refresh tokens.
+- **Club catalog** — list clubs, fetch details, view booking settings (max-days-in-advance, cancel windows).
+- **Schedule** — public bookings + excludes for any date, no auth needed.
+- **Reservations** — list/create/cancel; bulk-create multiple courts in one server-side call.
+- **Stateless** — no sessions stored server-side; the MCP caller supplies the `access_token` per call.
+- **Typed** — Pydantic v2 models for the new API.
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- `uv` for dependency management
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/)
 
 ### Setup
 
-1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd twojtenis_pl
-```
-
-2. Install dependencies using `uv`:
-```bash
 uv sync
+uv pip install -e ".[browser-auth]"
+uv run playwright install chromium
 ```
 
-3. Set up configuration:
-```bash
-cp .env.example .env
-# Edit .env with your TwojTenis.pl credentials
-```
+The `browser-auth` extra installs Playwright; required because Auth0 ROPC is disabled on this tenant and login goes through the Universal Login form.
 
 ## Configuration
 
-The server supports configuration through environment variables and/or a configuration file. Environment variables take precedence over the configuration file.
-
-### Environment Variables
-
-Create a `.env` file with the following variables:
+All configuration is via environment variables — there is no config file in 0.2.0.
 
 ```bash
-# Required
-TWOJTENIS_EMAIL=your_email@example.com
-TWOJTENIS_PASSWORD=your_password
-
-# Optional
-TWOJTENIS_CONFIG_PATH=config/config.json
-TWOJTENIS_CLUBS_FILE=config/clubs.json
-TWOJTENIS_BASE_URL=https://old.twojtenis.pl
+# Optional — overrides for dev/staging
+TWOJTENIS_MAIN_API_URL=https://app-twojtenis-api-p-weu.azurewebsites.net
 TWOJTENIS_REQUEST_TIMEOUT=30
-TWOJTENIS_RETRY_ATTEMPTS=3
-TWOJTENIS_RETRY_DELAY=1.0
 
-# Auth0 (defaults are production values)
-# AUTH0_DOMAIN=twojtenis.eu.auth0.com
-# AUTH0_CLIENT_ID=86BsGMVf8imqTkuKVkxeW2FalNALsO4y
-# AUTH0_BROWSER_HEADLESS=true
-# AUTH0_BROWSER_TIMEOUT=60
-# AUTH0_BROWSER_EXECUTABLE_PATH=   # set on AWS Lambda
-```
-
-### Configuration File
-
-Alternatively, create `config/config.json`:
-
-```json
-{
-  "TWOJTENIS_EMAIL": "your_email@example.com",
-  "TWOJTENIS_PASSWORD": "your_password",
-  "TWOJTENIS_REQUEST_TIMEOUT": 30
-}
+# Auth0 (defaults are production values; do NOT "fix" the typo in audience)
+AUTH0_DOMAIN=twojtenis.eu.auth0.com
+AUTH0_CLIENT_ID=86BsGMVf8imqTkuKVkxeW2FalNALsO4y
+AUTH0_AUDIENCE=https://api.twojetenis.pl   # extra 'e' is intentional
+AUTH0_REDIRECT_URI=https://app.twojtenis.pl
+AUTH0_SCOPE=openid profile email offline_access
+AUTH0_BROWSER_HEADLESS=true
+AUTH0_BROWSER_TIMEOUT=60
+AUTH0_BROWSER_EXECUTABLE_PATH=  # set on AWS Lambda
 ```
 
 ## Usage
 
 ### Running the Server
 
-Start the MCP server:
-
 ```bash
 uv run -m twojtenis_mcp.server
 ```
 
-### Available Tools
+### Available Tools (v0.2.0)
 
-The server provides the following MCP tools:
+Authentication:
 
- **get_all_clubs()** - Get list of all available clubs
- **get_all_sports()** - Get list of all supported sport IDs
- **get_club_schedule(club_id, sport_id, date)** - Get court availability schedule
- **get_reservations()** - Get user's current reservations
- **put_reservation(club_id, court_number, date, hour, sport_id)** - Make a single reservation
- **put_bulk_reservation(club_id, sport_id, court_bookings)** - Make multiple reservations in one request
- **delete_reservation(club_id, court_number, date, hour)** - Delete a reservation
- **check_availability(club_id, sport_id, court_number, date, hour)** - Check court availability
- **get_available_slots(club_id, sport_id, date, court_number)** - Get all available slots
+| Tool | Args | Returns |
+|------|------|---------|
+| `login_oauth` | `email`, `password` | `{success, access_token, refresh_token, expires_at, token_type, scope, id_token}` |
+| `refresh_oauth_token` | `refresh_token` | same shape as `login_oauth` |
 
-#### Bulk Reservation
+Booking — every tool takes `access_token` as the first arg:
 
-The `put_bulk_reservation` tool allows booking multiple courts in a single API call. Each booking is a dictionary with the following fields:
+| Tool | Args | Returns |
+|------|------|---------|
+| `get_all_clubs` | `access_token` | `[{id, name, address, openHours, priceMin, priceMax, ...}]` |
+| `get_club_schedule` | `access_token, club_id, date` | `{success, data: {club_id, date, bookings, excludes}}` |
+| `get_reservations` | `access_token, from_date="", to_date=""` | list of bookings (default window: today..+90d) |
+| `get_reservation_details` | `access_token, booking_id` | `{success, reservation}` or `{success: False, message}` |
+| `put_reservation` | `access_token, club_id, location_id, location_name, date, start_time, end_time` | `{success, reservation}` |
+| `put_bulk_reservation` | `access_token, club_id, court_bookings` | `{success, reservations: [...]}` |
+| `delete_reservation` | `access_token, booking_id` | `{success, message}` |
+| `delete_all_reservations` | `access_token` | `{success, deleted_count, deleted_booking_ids, errors}` |
 
-- `court`: Court number as string (e.g., "1", "2", "3")
-- `date`: Date in DD.MM.YYYY format (e.g., "27.12.2025")
-- `time_start`: Start time in HH:MM format (e.g., "21:00")
-- `time_end`: End time in HH:MM format (e.g., "21:30")
+Date format: `YYYY-MM-DD` or legacy `DD.MM.YYYY` (both accepted on input).
+Time format: `HH:MM` or `HH:MM:SS`.
+IDs (clubs, locations, bookings, players) are UUIDs.
 
-Example:
+#### Bulk reservation
+
+`court_bookings` is a list of dicts:
+
 ```json
-{
-  "club_id": "blonia_sport",
-  "sport_id": 84,
-  "court_bookings": [
-    {"court": "1", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"},
-    {"court": "2", "date": "27.12.2025", "time_start": "21:00", "time_end": "21:30"}
-  ]
-}
+[
+  {"location_id": "3931aabd-...", "location_name": "Badminton 2",
+   "date": "2026-05-11", "start_time": "16:00", "end_time": "17:00"},
+  {"location_id": "3931aabd-...", "location_name": "Badminton 2",
+   "date": "2026-05-11", "start_time": "17:00", "end_time": "18:00"}
+]
 ```
 
+The server makes one `calculate-price` call per item, then a single `POST /bookings` with all entries.
 
 ## Auth0 Authentication
 
-`login_oauth(email, password)` drives Auth0's Universal Login form via headless
-Chromium (ROPC is disabled on this tenant) and exchanges the authorization code
-for JWT tokens. Refresh via `refresh_oauth_token` (pure HTTP, no browser).
+`login_oauth` drives Auth0 Universal Login via headless Chromium and exchanges the resulting authorization code for JWT tokens. Refresh via `refresh_oauth_token` (pure HTTP, no browser).
 
-To enable browser auth:
+If `playwright` is not installed, `login_oauth` returns `{success: false, code: "OAUTH_PLAYWRIGHT_REQUIRED"}`.
 
-```bash
-uv pip install -e ".[browser-auth]"
-uv run playwright install chromium
-```
+For AWS Lambda, set `AUTH0_BROWSER_EXECUTABLE_PATH=/opt/chromium/chromium` and use the [Sparticuz/chromium](https://github.com/Sparticuz/chromium) layer.
 
-If `playwright` is not installed, `login_oauth` returns `code: OAUTH_PLAYWRIGHT_REQUIRED`.
-
-For AWS Lambda, set `AUTH0_BROWSER_EXECUTABLE_PATH=/opt/chromium/chromium` and use
-the [Sparticuz/chromium](https://github.com/Sparticuz/chromium) Lambda layer.
+OAuth error codes: `OAUTH_INVALID_CREDENTIALS`, `OAUTH_PLAYWRIGHT_REQUIRED`, `OAUTH_BROWSER_TIMEOUT`, `OAUTH_NETWORK_ERROR`, `OAUTH_UNEXPECTED`.
 
 ### Testing with MCP Inspector
 
-To test the MCP tools functionality:
-
-1. Run the MCP Inspector:
 ```bash
 npx @modelcontextprotocol/inspector uv run -m twojtenis_mcp.server
 ```
 
-2. Open the MCP Inspector Web UI:
-In the console with running step 1 command, find the link URL 
-http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=...  and open it in a browser 
+Open the URL printed in the console (e.g. `http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=...`).
 
-4. Connect the Inspector to your MCP server and test the tools
+Example call:
 
-Example test case in MCP Inspector:
 ```json
 {
   "tool": "get_club_schedule",
   "arguments": {
-    "club_id": "blonia_sport",
-    "sport_id": 84,
-    "date": "28.10.2025"
+    "access_token": "<jwt from login_oauth>",
+    "club_id": "958662f0-0bd2-4fdc-8bef-bb2d69761adb",
+    "date": "2026-05-11"
   }
 }
 ```
 
-### Debugging with MCP Inspector in VSCode
+### Debugging in VSCode
 
-Ensure you have Python Debugger extension installed in VSCode. Put the following json into the .vscode/launch.json file:
+1. Add `.vscode/launch.json`:
+
 ```json
 {
-  "configurations": [
-    {
-      "name": "Attach to Running MCP Server",
-      "type": "debugpy",
-      "request": "attach",
-      "connect": {
-        "host": "localhost",
-        "port": 5678
-      },
-      "pathMappings": [
-        {
-          "localRoot": "${workspaceFolder}",
-          "remoteRoot": "."
-        }
-      ]
-    }
-  ]
+  "configurations": [{
+    "name": "Attach to Running MCP Server",
+    "type": "debugpy",
+    "request": "attach",
+    "connect": {"host": "localhost", "port": 5678},
+    "pathMappings": [{"localRoot": "${workspaceFolder}", "remoteRoot": "."}]
+  }]
 }
 ```
 
-1. Run the MCP Inspector with debug mode command:
+2. Run with `--debug` and attach the debugger to port 5678:
+
 ```bash
 npx @modelcontextprotocol/inspector uv run python -m twojtenis_mcp.server --debug -Xfrozen_modules=off
 ```
 
-2. Open the URL in the console output in the browser
+## Migration from 0.1.x
 
-3. Connect the Inspector to your MCP server with button Connect
+Breaking changes:
 
-4. In the VSCode, open the server.py and set breakpoints on the methods you want to debug. 
-
-5. Start debugging session clicking on the top triangle button with dropdown, choosing "Python Debugger: Debug using launch.json" and then "Attach to Running MCP Server". Debug session will start in VSCode.
-
-### Date/Time Formats
-
-- **Date**: DD.MM.YYYY (e.g., "24.09.2025")
-- **Time**: HH:MM (e.g., "10:00", "10:30")
-
-### Club IDs
-
-Common club IDs include:
-- `blonia_sport` - Błonia Sport
-- `ks_nadwislan_krakow` - KS Nadwiślan Kraków
-- `krakowska_szkola_tenisa_tenis24` - Krakowska Szkoła Tenisa TENIS24
-- `forehand_krakowska_szkola_tenisa` - Forehand Krakowska Akademia Tenisa
-- `katenis__korty_olsza` - KATenis - korty Olsza
-- `korty_dabskie` - Korty Dąbskie
-- `wks_wawel` - WKS Wawel
-- `klub_tenisowy_blonia_krakow` - Klub Tenisowy Błonia Kraków
-
-## Examples
-
-### Basic Usage
-
-```python
-# Login with Auth0
-tokens = await login_oauth("user@example.com", "password")
-# tokens = {"success": True, "access_token": "...", "refresh_token": "...", "expires_at": ..., ...}
-
-# Refresh access token
-tokens = await refresh_oauth_token(tokens["refresh_token"])
-
-# Get clubs
-clubs = await get_all_clubs()
-
-# Get schedule for badminton at Błonia Sport
-schedule = await get_club_schedule(
-    club_id="blonia_sport",
-    sport_id=84,  # Badminton
-    date="24.09.2025"
-)
-
-# Make a reservation
-result = await put_reservation(
-    club_id="blonia_sport",
-    court_number=1,
-    date="24.09.2025",
-    hour="10:00",
-    sport_id=84
-)
-```
+- `session_id` (PHPSESSID) → `access_token` (Auth0 JWT) on every tool.
+- Club ids are UUIDs (e.g. `958662f0-0bd2-4fdc-8bef-bb2d69761adb`); legacy string ids and numeric `num` are gone.
+- Courts addressed by `location_id` (UUID) + `location_name` instead of numeric `court_number`.
+- `sport_id` removed (new API isn't sport-scoped — filter client-side via `location_id`).
+- `get_all_sports` removed.
+- Removed env vars: `TWOJTENIS_EMAIL`, `TWOJTENIS_PASSWORD`, `TWOJTENIS_BASE_URL`, `TWOJTENIS_RETRY_ATTEMPTS`, `TWOJTENIS_RETRY_DELAY`, `TWOJTENIS_CONFIG_PATH`, `TWOJTENIS_CLUBS_FILE`.
 
 ## Development
 
@@ -265,96 +170,43 @@ result = await put_reservation(
 ```
 src/twojtenis_mcp/
 ├── __init__.py
-├── server.py              # Main MCP server
-├── config.py              # Configuration management
-├── auth.py                # Authentication and session management
-├── client.py              # HTTP client wrapper
-├── models.py              # Typed data models
-├── schedule_parser.py     # Schedule parsing logic
-├── utils.py               # Utility functions
-└── endpoints/             # MCP tool implementations
-    ├── __init__.py
+├── server.py           # FastMCP entrypoint + @mcp.tool() definitions
+├── config.py           # Env-driven configuration
+├── client.py           # ApiClient — async httpx, Bearer auth, JSON only
+├── tech_group.py       # Per-club regional API URL resolver (cached)
+├── locations.py        # Court UUID + name resolver
+├── models.py           # Pydantic v2 models for the new API
+├── utils.py            # Date conversion, auth0 sub URL encoding
+├── jwt_utils.py        # JWT decode helpers (sub, expiry)
+├── oauth_browser.py    # Playwright-driven Auth0 login flow
+├── oauth_client.py     # PKCE + token exchange
+└── endpoints/
     ├── clubs.py
     ├── reservations.py
-    └── booking.py
+    ├── schedules.py
+    └── oauth.py
 ```
 
-### Running Tests
+### Tests
 
 ```bash
 uv run pytest tests/
 ```
 
-MCP Inspedtor allows you to debug and test server. Run from project folder in terminal:
+Real-API integration tests (`test_real_login_returns_jwt_with_correct_audience`) auto-skip unless `TWOJTENIS_EMAIL` and `TWOJTENIS_PASSWORD` are set.
 
-```bash
-npx @modelcontextprotocol/inspector uv run python -m twojtenis_mcp.server
-```
-
-### Code Formatting
+### Lint
 
 ```bash
 uvx ruff check src/
 ```
 
-## Troubleshooting
+## Error Handling
 
-### Common Issues
+All booking tools wrap `ApiErrorException` and return `{success: false, code, message, details}` on failure.
 
-1. **Authentication Failed**: Check your email and password; ensure `playwright` is installed (`uv pip install -e ".[browser-auth]" && uv run playwright install chromium`)
-2. **Network Errors**: Check your internet connection and the TwojTenis.pl website status
-3. **Invalid Date/Time**: Ensure dates are in DD.MM.YYYY format and times in HH:MM format
-4. **Lambda Deployment**: Set `AUTH0_BROWSER_EXECUTABLE_PATH=/opt/chromium/chromium` and include the Sparticuz/chromium layer
-
-### Logging
-
-The server provides detailed logging. Check the console output for error messages and debugging information.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+Codes: `AUTHENTICATION_REQUIRED`, `FORBIDDEN`, `HTTP_ERROR`, `REQUEST_FAILED`, `VALIDATION_ERROR`, `NO_TECH_GROUP`, `PRICE_CALCULATION_FAILED`, `BOOKING_FAILED`.
 
 ## License
 
-This project is licensed under the MIT License.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review the logs for error messages
-3. Create an issue in the repository
-
-## API Reference
-
-### Authentication
-
-The server uses Auth0 OIDC (Authorization Code + PKCE) to obtain JWT access tokens. Call `login_oauth` once to get tokens; use `refresh_oauth_token` to renew without re-launching a browser.
-
-### Error Handling
-
-All tools return standardized responses with:
-- `success`: Boolean indicating success/failure
-- `message`: Descriptive message
-- `data`: Response data (for successful operations)
-- `timestamp`: ISO timestamp of the response
-
-### Rate Limiting
-
-The server implements retry logic with exponential backoff for failed requests. Default configuration:
-- 3 retry attempts
-- 1.0 second base delay
-- Exponential backoff multiplier
-
-### Data Models
-
-The server uses Pydantic models for type safety:
-- `Club`: Club information
-- `Court`: Court availability
-- `Schedule`: Club schedule
-- `Reservation`: User reservation
-- `ApiErrorException`: Structured error with `code` and `message` fields
+MIT
