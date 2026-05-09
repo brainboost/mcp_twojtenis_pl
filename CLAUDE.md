@@ -82,7 +82,7 @@ Booking tools (all take an Auth0 `access_token` from `login_oauth`):
 
 - `get_all_clubs(access_token)` — list clubs (UUID id, name, address, openHours, prices, ...)
 - `get_club_locations(access_token, club_id, sport="")` — list courts at one club; returns `id` (UUID, used as `location_id`), `name` (used as `location_name`), `sport` (derived: `"tennis"`, `"badminton"`, `"padel"`, `"squash"`, `"table_tennis"`, `"fitness"`, `"bowling"`, `"football"`, `"multi"`, or `null`), plus `short_name`, `tags`, `sort_number`, `type`, `has_light`, `is_enabled`, `group_name`. Source: the `locations` field of `GET /api/v1/Clubs/{id}`. Pass `sport` to filter (case-insensitive). Sport mapping lives in `models.SPORT_BY_TYPE`/`SPORT_BY_TAG` — extend if new `type` values appear.
-- `get_club_schedule(access_token, club_id, date)` — public bookings + excludes for one day
+- `get_club_schedule(access_token, club_id, date)` — per-court availability grid for one day. Returns `{success, data: {club_id, date, availability: [{location_id, location_name, sport, slots: [{start, end, available}]}]}}`. Slots are 30-minute, generated from the club's `openHours[weekday]`, marked unavailable when any booking or exclude overlaps. Disabled courts are dropped. Closed days return `availability: []`.
 - `get_reservations(access_token, from_date="", to_date="")` — defaults to `today .. today+90d`
 - `get_reservation_details(access_token, booking_id)`
 - `put_reservation(access_token, club_id, location_id, location_name, date, start_time, end_time)`

@@ -73,7 +73,7 @@ Booking — every tool takes `access_token` as the first arg:
 |------|------|---------|
 | `get_all_clubs` | `access_token` | `[{id, name, address, openHours, priceMin, priceMax, ...}]` |
 | `get_club_locations` | `access_token, club_id, sport=""` | `[{id, name, sport, short_name, tags, sort_number, type, has_light, ...}]` — courts at the club. `sport` is derived: `tennis`, `badminton`, `padel`, `squash`, `table_tennis`, `fitness`, `bowling`, `football`, `multi`, or `null`. Pass `sport="badminton"` etc. to filter. |
-| `get_club_schedule` | `access_token, club_id, date` | `{success, data: {club_id, date, bookings, excludes}}` |
+| `get_club_schedule` | `access_token, club_id, date` | `{success, data: {club_id, date, availability: [{location_id, location_name, sport, slots: [{start, end, available}]}]}}` — 30-min slots over the club's open hours, marked available iff no booking/exclude overlaps. |
 | `get_reservations` | `access_token, from_date="", to_date=""` | list of bookings (default window: today..+90d) |
 | `get_reservation_details` | `access_token, booking_id` | `{success, reservation}` or `{success: False, message}` |
 | `put_reservation` | `access_token, club_id, location_id, location_name, date, start_time, end_time` | `{success, reservation}` |

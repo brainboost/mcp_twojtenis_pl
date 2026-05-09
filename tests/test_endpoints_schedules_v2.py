@@ -2,16 +2,54 @@ import pytest
 
 from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.endpoints.schedules import SchedulesEndpoint
+from twojtenis_mcp.locations import LocationsService
 from twojtenis_mcp.models import ApiErrorException
 from twojtenis_mcp.tech_group import TechGroupResolver
 
+CLUB_DETAILS = {
+    "id": "c",
+    "name": "Klub",
+    "openHours": {
+        d: {"from": "09:00:00", "to": "11:00:00"}
+        for d in (
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        )
+    },
+    "locations": [
+        {
+            "id": "loc-1",
+            "name": "Kort 1",
+            "type": 0,
+            "tags": "Tennis",
+            "isEnabled": True,
+            "sortNumber": 1,
+        },
+        {
+            "id": "loc-2",
+            "name": "Badminton 2",
+            "type": 1,
+            "tags": "Badminton",
+            "isEnabled": True,
+            "sortNumber": 2,
+        },
+    ],
+}
+
 
 @pytest.mark.asyncio
-async def test_get_schedule_combines_public_and_excludes(monkeypatch):
-    seen: list[tuple[str, dict | None]] = []
+async def test_get_schedule_returns_availability_grid(monkeypatch):
+    seen: list[str] = []
 
     async def fake_get(self, url, *, access_token, params=None):
-        seen.append((url, dict(params) if params else None))
+        seen.append(url)
+        if url.endswith("/api/v1/Clubs/c"):
+            return CLUB_DETAILS
         if "/technical-group" in url:
             return {"id": "TG", "serviceUrl": "https://tech.example", "name": "TG"}
         if "/bookings/public" in url:
@@ -19,11 +57,10 @@ async def test_get_schedule_combines_public_and_excludes(monkeypatch):
                 {
                     "clubId": "c",
                     "date": "2026-05-11",
-                    "startTime": "15:00:00",
-                    "endTime": "17:00:00",
-                    "locationId": "loc1",
+                    "startTime": "10:00:00",
+                    "endTime": "10:30:00",
+                    "locationId": "loc-1",
                     "id": "b1",
-                    "price": None,
                 }
             ]
         if "/excludes/public" in url:
@@ -32,19 +69,62 @@ async def test_get_schedule_combines_public_and_excludes(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main.example")
-    ep = SchedulesEndpoint(client, TechGroupResolver(client))
+    locations = LocationsService(client)
+    ep = SchedulesEndpoint(client, TechGroupResolver(client), locations)
     out = await ep.get_club_schedule(club_id="c", date="11.05.2026", access_token="t")
     assert out["success"] is True
     assert out["data"]["date"] == "2026-05-11"
-    assert out["data"]["bookings"][0]["start_time"] == "15:00:00"
-    assert out["data"]["bookings"][0]["location_id"] == "loc1"
-    assert out["data"]["excludes"] == []
+
+    grid = out["data"]["availability"]
+    assert {c["location_id"] for c in grid} == {"loc-1", "loc-2"}
+
+    by_loc = {c["location_id"]: c for c in grid}
+    loc1_slots = {s["start"]: s["available"] for s in by_loc["loc-1"]["slots"]}
+    assert loc1_slots == {
+        "09:00": True,
+        "09:30": True,
+        "10:00": False,  # booked
+        "10:30": True,
+    }
+    # loc-2 has no bookings on this day
+    loc2_slots = {s["start"]: s["available"] for s in by_loc["loc-2"]["slots"]}
+    assert all(loc2_slots.values())
+    assert by_loc["loc-1"]["sport"] == "tennis"
+    assert by_loc["loc-2"]["sport"] == "badminton"
 
 
 @pytest.mark.asyncio
 async def test_invalid_date_raises():
     client = ApiClient(main_base="https://main.example")
-    ep = SchedulesEndpoint(client, TechGroupResolver(client))
+    ep = SchedulesEndpoint(
+        client, TechGroupResolver(client), LocationsService(client)
+    )
     with pytest.raises(ApiErrorException) as ei:
         await ep.get_club_schedule(club_id="c", date="not-a-date", access_token="t")
     assert ei.value.code == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_club_details_cached_across_calls(monkeypatch):
+    detail_fetches = 0
+
+    async def fake_get(self, url, *, access_token, params=None):
+        nonlocal detail_fetches
+        if url.endswith("/api/v1/Clubs/c"):
+            detail_fetches += 1
+            return CLUB_DETAILS
+        if "/technical-group" in url:
+            return {"id": "TG", "serviceUrl": "https://tech.example", "name": "TG"}
+        if "/bookings/public" in url or "/excludes/public" in url:
+            return []
+        raise AssertionError(url)
+
+    monkeypatch.setattr(ApiClient, "get", fake_get)
+    client = ApiClient(main_base="https://main.example")
+    locations = LocationsService(client)
+    ep = SchedulesEndpoint(client, TechGroupResolver(client), locations)
+    await ep.get_club_schedule(club_id="c", date="2026-05-11", access_token="t")
+    await ep.get_club_schedule(club_id="c", date="2026-05-12", access_token="t")
+    # Same LocationsService instance also serves get_club_locations
+    await locations.locations_for_club("c", access_token="t")
+    assert detail_fetches == 1

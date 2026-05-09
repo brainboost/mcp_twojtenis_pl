@@ -19,6 +19,25 @@ class LocationsService:
     def __init__(self, client: ApiClient) -> None:
         self._client = client
         self._names: dict[str, str] = {}
+        self._details_cache: dict[str, dict[str, Any]] = {}
+
+    async def get_club_details(
+        self, club_id: str, *, access_token: str
+    ) -> dict[str, Any]:
+        """Return the cached `/api/v1/Clubs/{id}` response. One fetch per process per club."""
+        cached = self._details_cache.get(club_id)
+        if cached is not None:
+            return cached
+        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
+        details = await self._client.get(url, access_token=access_token) or {}
+        self._details_cache[club_id] = details
+        return details
+
+    def invalidate_club(self, club_id: str | None = None) -> None:
+        if club_id is None:
+            self._details_cache.clear()
+        else:
+            self._details_cache.pop(club_id, None)
 
     async def locations_for_club(
         self,
@@ -34,8 +53,7 @@ class LocationsService:
         for known values: "tennis", "badminton", "padel", "squash",
         "table_tennis", "fitness", "bowling", "football", "multi".
         """
-        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
-        details = await self._client.get(url, access_token=access_token) or {}
+        details = await self.get_club_details(club_id, access_token=access_token)
         raw = details.get("locations") or []
         locations = [Location.model_validate(item) for item in raw]
         for loc in locations:

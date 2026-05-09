@@ -21,9 +21,9 @@ mcp = FastMCP("twojtenis-mcp")
 _client = ApiClient(main_base=config.main_api_url, timeout=config.request_timeout)
 _resolver = TechGroupResolver(_client)
 _clubs = ClubsEndpoint(_client)
-_schedules = SchedulesEndpoint(_client, _resolver)
-_reservations = ReservationsEndpoint(_client, _resolver)
 _locations = LocationsService(_client)
+_schedules = SchedulesEndpoint(_client, _resolver, _locations)
+_reservations = ReservationsEndpoint(_client, _resolver)
 
 
 def _err(exc: ApiErrorException) -> dict[str, Any]:
