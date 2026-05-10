@@ -1,194 +1,101 @@
-"""Tests for data models."""
-
-from datetime import datetime
-
 from twojtenis_mcp.models import (
-    ApiError,
     ApiErrorException,
     Club,
-    Court,
-    DeleteReservationRequest,
     Reservation,
-    ReservationRequest,
-    Schedule,
-    UserSession,
 )
 
 
-class TestClub:
-    """Test Club model."""
-
-    def test_club_creation(self):
-        """Test creating a club."""
-        club = Club(
-            id="blonia_sport",
-            num=90,
-            name="Błonia Sport",
-            address="al. 3 Maja 57",
-            phone="+48728871400",
-        )  # type: ignore
-
-        assert club.id == "blonia_sport"
-        assert club.name == "Błonia Sport"
-        assert club.address == "al. 3 Maja 57"
-        assert club.phone == "+48728871400"
-
-    def test_club_serialization(self):
-        """Test club serialization."""
-        club = Club(
-            id="test_club",
-            num=0,
-            name="Test Club",
-            address="Test Address",
-            phone="+48123456789",
-        )  # type: ignore
-
-        data = club.model_dump()
-        assert data["id"] == "test_club"
-        assert data["name"] == "Test Club"
-        assert data["address"] == "Test Address"
-        assert data["phone"] == "+48123456789"
-
-
-class TestCourt:
-    """Test Court model."""
-
-    def test_court_creation(self):
-        """Test creating a court."""
-        availability = {"07:00": True, "07:30": False, "08:00": True}
-
-        court = Court(number="Kort 1", availability=availability)
-
-        assert court.number == "Kort 1"
-        assert court.availability == availability
-        assert court.availability["07:00"] is True
-        assert court.availability["07:30"] is False
-
-    def test_court_serialization(self):
-        """Test court serialization."""
-        availability = {"10:00": True, "10:30": False}
-        court = Court(number="Kort 2", availability=availability)
-
-        data = court.model_dump()
-        assert data["number"] == "Kort 2"
-        assert data["availability"] == availability
+def test_club_parses_real_payload():
+    raw = {
+        "id": "b8431bee-80fe-435d-9f10-1f710a9ec003",
+        "name": "Klub Testowy",
+        "address": {
+            "line": "Rynek Główny",
+            "city": "Kraków",
+            "region": "Małopolskie",
+            "postalCode": "31-042",
+            "latitude": 50.0619,
+            "longitude": 19.9368,
+        },
+        "contactInfo": {
+            "phoneNo": None,
+            "email": None,
+            "www": "https://x",
+            "facebookProfile": None,
+            "instagramProfile": None,
+            "tikTokProfile": None,
+            "twitterProfile": None,
+        },
+        "logoUrl": "https://x/logo.svg",
+        "bannerUrl": None,
+        "priceMin": 110.00,
+        "priceMax": 160.00,
+        "locationsCount": 3,
+        "openHours": {
+            "monday": {"from": "07:00:00", "to": "23:00:00"},
+            "tuesday": {"from": "07:00:00", "to": "23:00:00"},
+            "wednesday": {"from": "07:00:00", "to": "23:00:00"},
+            "thursday": {"from": "07:00:00", "to": "23:00:00"},
+            "friday": {"from": "07:00:00", "to": "23:00:00"},
+            "saturday": {"from": "07:00:00", "to": "23:00:00"},
+            "sunday": {"from": "07:00:00", "to": "23:00:00"},
+        },
+        "isSmartTennisPartner": False,
+        "multiSportDiscount": 15.00,
+        "medicoverDiscount": 15.00,
+    }
+    c = Club.model_validate(raw)
+    assert c.id == "b8431bee-80fe-435d-9f10-1f710a9ec003"
+    assert c.address.city == "Kraków"
+    assert c.open_hours.monday.from_ == "07:00:00"
+    assert c.locations_count == 3
 
 
-class TestSchedule:
-    """Test Schedule model."""
-
-    def test_schedule_creation(self):
-        """Test creating a schedule."""
-        courts = [
-            Court(number="Kort 1", availability={"10:00": True}),
-            Court(number="Kort 2", availability={"10:00": False}),
-        ]
-
-        schedule = Schedule(
-            club_id="test_club",
-            sport_id=84,
-            date="24.09.2025",
-            courts=courts,
-        )
-
-        assert schedule.club_id == "test_club"
-        assert schedule.sport_id == 84
-        assert schedule.date == "24.09.2025"
-        assert len(schedule.courts) == 2
-        assert schedule.courts[0].number == "Kort 1"
-        assert schedule.courts[1].number == "Kort 2"
-
-
-class TestReservation:
-    """Test Reservation model."""
-
-    def test_reservation_creation(self):
-        """Test creating a reservation."""
-        reservation = Reservation(
-            booking_id="qwerty",
-            user_id="test_session",
-            club_id="test_club",
-            court_number="Kort 1",
-            date="24.09.2025",
-            hour="10:00",
-            sport_id=84,
-        )
-        assert reservation.booking_id == "qwerty"
-        assert reservation.user_id == "test_session"
-        assert reservation.club_id == "test_club"
-        assert reservation.court_number == "Kort 1"
-        assert reservation.date == "24.09.2025"
-        assert reservation.hour == "10:00"
-        assert reservation.sport_id == 84
+def test_reservation_parses_my_bookings_payload():
+    raw = {
+        "bookedBy": "auth0|abc",
+        "locationName": "Badminton 2",
+        "clubName": "Błonia",
+        "bookedFor": {
+            "bookerHasUser": True,
+            "bookerId": "u",
+            "cachedName": "S",
+            "type": 0,
+            "cachedEmail": "e",
+            "cachedPhone": "+48",
+        },
+        "payment": {
+            "id": "p",
+            "status": "awaiting",
+            "paidAmount": 0,
+            "paymentDue": "2026-05-11T14:00:00",
+            "discountType": "",
+            "discountValue": 0,
+            "amountToPay": 70,
+            "initialAmount": 70,
+        },
+        "isDeleted": False,
+        "createdBy": "S",
+        "createdOn": "2026-05-07T21:14:25.5+00:00",
+        "cancelUntil": "2026-05-10T16:00:00",
+        "clubId": "c",
+        "date": "2026-05-11",
+        "startTime": "16:00:00",
+        "endTime": "17:00:00",
+        "locationId": "l",
+        "id": "b",
+        "price": 70.00,
+    }
+    r = Reservation.model_validate(raw)
+    assert r.id == "b"
+    assert r.location_name == "Badminton 2"
+    assert r.start_time == "16:00:00"
+    assert r.payment.amount_to_pay == 70
 
 
-class TestUserSession:
-    """Test UserSession model."""
-
-    def test_user_session_creation(self):
-        """Test creating a user session."""
-        expires_at = datetime.now()
-        session = UserSession(
-            phpsessid="test_session_id",
-            expires_at=expires_at,
-        )
-
-        assert session.phpsessid == "test_session_id"
-        assert session.expires_at == expires_at
-
-
-class TestApiError:
-    """Test ApiError model."""
-
-    def test_api_error_creation(self):
-        """Test creating an API error."""
-        error = ApiError(
-            code="TEST_ERROR", message="Test error message", details={"field": "value"}
-        )
-
-        assert error.code == "TEST_ERROR"
-        assert error.message == "Test error message"
-        assert error.details == {"field": "value"}
-
-    def test_api_error_without_details(self):
-        """Test creating an API error without details."""
-        error = ApiErrorException(code="SIMPLE_ERROR", message="Simple error message")
-
-        assert error.code == "SIMPLE_ERROR"
-        assert error.message == "Simple error message"
-        assert error.details is None
-
-
-class TestReservationRequest:
-    """Test ReservationRequest model."""
-
-    def test_reservation_request_creation(self):
-        """Test creating a reservation request."""
-        request = ReservationRequest(
-            club_id="test_club",
-            court_number="Kort 1",
-            date="24.09.2025",
-            hour="10:00",
-            sport_id=84,
-        )
-
-        assert request.club_id == "test_club"
-        assert request.court_number == "Kort 1"
-        assert request.date == "24.09.2025"
-        assert request.hour == "10:00"
-        assert request.sport_id == 84
-
-
-class TestDeleteReservationRequest:
-    """Test DeleteReservationRequest model."""
-
-    def test_delete_reservation_request_creation(self):
-        """Test creating a delete reservation request."""
-        request = DeleteReservationRequest(
-            club_id="test_club", court_number="Kort 1", date="24.09.2025", hour="10:00"
-        )
-
-        assert request.club_id == "test_club"
-        assert request.court_number == "Kort 1"
-        assert request.date == "24.09.2025"
-        assert request.hour == "10:00"
+def test_api_error_exception_carries_code_message_details():
+    exc = ApiErrorException("X_CODE", "msg", {"k": 1})
+    assert exc.code == "X_CODE"
+    assert exc.message == "msg"
+    assert exc.details == {"k": 1}
+    assert str(exc) == "msg"

@@ -305,10 +305,10 @@ async def test_login_oauth_tool_returns_error_dict_on_exception(mocker):
 # ---------------------------------------------------------------------------
 
 
-# @pytest.mark.skipif(
-#     not all(os.getenv(k) for k in ("TWOJTENIS_EMAIL", "TWOJTENIS_PASSWORD")),
-#     reason="needs real credentials and 'browser-auth' extras installed",
-# )
+@pytest.mark.skipif(
+    not all(os.getenv(k) for k in ("TWOJTENIS_EMAIL", "TWOJTENIS_PASSWORD")),
+    reason="needs real credentials and 'browser-auth' extras installed",
+)
 @pytest.mark.asyncio
 async def test_real_login_returns_jwt_with_correct_audience():
     """Real Auth0 login; decodes JWT and verifies aud/iss/exp claims."""
@@ -317,6 +317,8 @@ async def test_real_login_returns_jwt_with_correct_audience():
     from twojtenis_mcp.oauth_client import OAuthClient
 
     client = OAuthClient()
+    assert os.environ["TWOJTENIS_EMAIL"]
+    assert os.environ["TWOJTENIS_PASSWORD"]
     result = await client.login(
         email=os.environ["TWOJTENIS_EMAIL"],
         password=os.environ["TWOJTENIS_PASSWORD"],
