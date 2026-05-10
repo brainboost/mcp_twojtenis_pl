@@ -39,9 +39,9 @@ All configuration is via environment variables — there is no config file in 0.
 TWOJTENIS_MAIN_API_URL=https://app-twojtenis-api-p-weu.azurewebsites.net
 TWOJTENIS_REQUEST_TIMEOUT=30
 
-# Auth0 (defaults are production values; do NOT "fix" the typo in audience)
+# Auth0 — see "Auth0 Client ID" note below before filling these in
 AUTH0_DOMAIN=twojtenis.eu.auth0.com
-AUTH0_CLIENT_ID=86BsGMVf8imqTkuKVkxeW2FalNALsO4y
+AUTH0_CLIENT_ID=<your-auth0-client-id>
 AUTH0_AUDIENCE=https://api.twojetenis.pl   # extra 'e' is intentional
 AUTH0_REDIRECT_URI=https://app.twojtenis.pl
 AUTH0_SCOPE=openid profile email offline_access
@@ -49,6 +49,16 @@ AUTH0_BROWSER_HEADLESS=true
 AUTH0_BROWSER_TIMEOUT=60
 AUTH0_BROWSER_EXECUTABLE_PATH=  # set on AWS Lambda
 ```
+
+### Auth0 Client ID
+
+`AUTH0_CLIENT_ID` is the OAuth 2.0 client registration ID for the **twojtenis.pl** application on `twojtenis.eu.auth0.com`. This is a public identifier (PKCE flow — no client secret involved).
+
+To find the value:
+1. Open the [Auth0 dashboard](https://manage.auth0.com/) for the `twojtenis.eu.auth0.com` tenant.
+2. Go to **Applications** → find the twojtenis.pl app → copy the **Client ID**.
+
+If you are a twojtenis.pl user (not the tenant admin), ask the project maintainer for the client ID, or extract it from the browser's network traffic when visiting `app.twojtenis.pl` (it appears in the Auth0 `/authorize` redirect URL as `client_id=...`).
 
 ## Usage
 

@@ -8,10 +8,7 @@ class Config:
 
     @property
     def main_api_url(self) -> str:
-        return os.getenv(
-            "TWOJTENIS_MAIN_API_URL",
-            "https://app-twojtenis-api-p-weu.azurewebsites.net",
-        )
+        return os.environ["TWOJTENIS_MAIN_API_URL"]
 
     @property
     def request_timeout(self) -> int:
@@ -23,7 +20,7 @@ class Config:
 
     @property
     def auth0_client_id(self) -> str:
-        return os.getenv("AUTH0_CLIENT_ID", "86BsGMVf8imqTkuKVkxeW2FalNALsO4y")
+        return os.environ["AUTH0_CLIENT_ID"]
 
     @property
     def auth0_audience(self) -> str:

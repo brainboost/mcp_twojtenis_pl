@@ -317,6 +317,8 @@ async def test_real_login_returns_jwt_with_correct_audience():
     from twojtenis_mcp.oauth_client import OAuthClient
 
     client = OAuthClient()
+    assert os.environ["TWOJTENIS_EMAIL"]
+    assert os.environ["TWOJTENIS_PASSWORD"]
     result = await client.login(
         email=os.environ["TWOJTENIS_EMAIL"],
         password=os.environ["TWOJTENIS_PASSWORD"],

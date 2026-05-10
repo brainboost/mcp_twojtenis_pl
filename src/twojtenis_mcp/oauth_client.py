@@ -54,7 +54,7 @@ class OAuthClient:
             try:
                 from .oauth_browser import perform_browser_login as _pbf
 
-                _module.perform_browser_login = _pbf  # type: ignore[attr-defined]
+                _module.perform_browser_login = _pbf  # ty:ignore[unresolved-attribute]
                 _fn = _pbf
             except ImportError as exc:
                 raise ApiErrorException(
