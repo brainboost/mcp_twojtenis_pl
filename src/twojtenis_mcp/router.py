@@ -43,16 +43,17 @@ class ApiRouter:
         access_token: str | None,
         client: ApiClient,
         params=None,
+        resolve_token: str | None = None,
     ) -> Any:
         """GET from the booking API. On 404, invalidates tech-group cache and retries once."""
         club_key = club_id.replace("-", "_").upper()
-        url = await self.booking_url(club_id, path, access_token=access_token or "")
+        url = await self.booking_url(club_id, path, access_token=resolve_token or access_token or "")
         try:
             return await client.get(url, access_token=access_token, params=params)
         except ApiErrorException as exc:
             if exc.code == "HTTP_ERROR" and (exc.details or {}).get("status") == 404:
                 self._resolver.invalidate(club_id)
-                url2 = await self.booking_url(club_id, path, access_token=access_token or "")
+                url2 = await self.booking_url(club_id, path, access_token=resolve_token or access_token or "")
                 if url2 == url:
                     override_key = f"TWOJTENIS_BOOKING_API_URL_{club_key}"
                     override_active = override_key in os.environ or "TWOJTENIS_BOOKING_API_URL" in os.environ

@@ -51,6 +51,7 @@ class SchedulesEndpoint:
                 club_id,
                 f"/api/v1/Clubs/{club_id}/bookings/public",
                 access_token=None,
+                resolve_token=access_token,
                 client=self._client,
                 params={"from": iso, "to": iso},
             )
@@ -61,6 +62,7 @@ class SchedulesEndpoint:
                 club_id,
                 f"/api/v1/clubs/{club_id}/excludes/public",
                 access_token=None,
+                resolve_token=access_token,
                 client=self._client,
                 params={"date": iso},
             )
