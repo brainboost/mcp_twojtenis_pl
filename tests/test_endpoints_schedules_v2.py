@@ -4,6 +4,7 @@ from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.endpoints.schedules import SchedulesEndpoint
 from twojtenis_mcp.locations import LocationsService
 from twojtenis_mcp.models import ApiErrorException
+from twojtenis_mcp.router import ApiRouter
 from twojtenis_mcp.tech_group import TechGroupResolver
 
 CLUB_DETAILS = {
@@ -69,8 +70,10 @@ async def test_get_schedule_returns_availability_grid(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main.example")
-    locations = LocationsService(client)
-    ep = SchedulesEndpoint(client, TechGroupResolver(client), locations)
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
+    locations = LocationsService(client, router)
+    ep = SchedulesEndpoint(client, router, locations)
     out = await ep.get_club_schedule(club_id="c", date="11.05.2026", access_token="t")
     assert out["success"] is True
     assert out["data"]["date"] == "2026-05-11"
@@ -96,8 +99,10 @@ async def test_get_schedule_returns_availability_grid(monkeypatch):
 @pytest.mark.asyncio
 async def test_invalid_date_raises():
     client = ApiClient(main_base="https://main.example")
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
     ep = SchedulesEndpoint(
-        client, TechGroupResolver(client), LocationsService(client)
+        client, router, LocationsService(client, router)
     )
     with pytest.raises(ApiErrorException) as ei:
         await ep.get_club_schedule(club_id="c", date="not-a-date", access_token="t")
@@ -121,8 +126,10 @@ async def test_club_details_cached_across_calls(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main.example")
-    locations = LocationsService(client)
-    ep = SchedulesEndpoint(client, TechGroupResolver(client), locations)
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
+    locations = LocationsService(client, router)
+    ep = SchedulesEndpoint(client, router, locations)
     await ep.get_club_schedule(club_id="c", date="2026-05-11", access_token="t")
     await ep.get_club_schedule(club_id="c", date="2026-05-12", access_token="t")
     # Same LocationsService instance also serves get_club_locations

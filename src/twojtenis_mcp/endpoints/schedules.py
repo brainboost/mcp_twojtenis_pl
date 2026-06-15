@@ -6,7 +6,7 @@ from ..availability import build_availability
 from ..client import ApiClient
 from ..locations import LocationsService
 from ..models import ApiErrorException
-from ..tech_group import TechGroupResolver
+from ..router import ApiRouter
 from ..utils import to_iso_date
 
 
@@ -25,11 +25,11 @@ class SchedulesEndpoint:
     def __init__(
         self,
         client: ApiClient,
-        resolver: TechGroupResolver,
+        router: ApiRouter,
         locations: LocationsService,
     ) -> None:
         self._client = client
-        self._resolver = resolver
+        self._router = router
         self._locations = locations
 
     async def get_club_schedule(
@@ -46,21 +46,22 @@ class SchedulesEndpoint:
         locations = details.get("locations") or []
         open_hours = details.get("openHours") or {}
 
-        tech = await self._resolver.service_url_for_club(
-            club_id, access_token=access_token
-        )
         bookings = (
-            await self._client.get(
-                f"{tech}/api/v1/Clubs/{club_id}/bookings/public",
+            await self._router.booking_get(
+                club_id,
+                f"/api/v1/Clubs/{club_id}/bookings/public",
                 access_token=None,
+                client=self._client,
                 params={"from": iso, "to": iso},
             )
             or []
         )
         excludes = (
-            await self._client.get(
-                f"{tech}/api/v1/clubs/{club_id}/excludes/public",
+            await self._router.booking_get(
+                club_id,
+                f"/api/v1/clubs/{club_id}/excludes/public",
                 access_token=None,
+                client=self._client,
                 params={"date": iso},
             )
             or []

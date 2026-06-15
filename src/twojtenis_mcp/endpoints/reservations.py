@@ -5,7 +5,7 @@ from typing import Any
 
 from ..client import ApiClient
 from ..models import ApiErrorException, Reservation
-from ..tech_group import TechGroupResolver
+from ..router import ApiRouter
 from ..utils import encode_auth0_sub, to_iso_date
 from .clubs import ClubsEndpoint
 
@@ -13,12 +13,12 @@ from .clubs import ClubsEndpoint
 class ReservationsEndpoint:
     """All booking operations against the new tech-group API."""
 
-    def __init__(self, client: ApiClient, resolver: TechGroupResolver) -> None:
+    def __init__(self, client: ApiClient, router: ApiRouter) -> None:
         self._client = client
-        self._resolver = resolver
+        self._router = router
 
     async def _user_tech_url(self, *, access_token: str) -> str:
-        url = f"{self._client.main_base}/api/v1/Players/me/technical-groups"
+        url = self._router.catalog_url("/api/v1/Players/me/technical-groups")
         groups = await self._client.get(url, access_token=access_token) or []
         if not groups:
             raise ApiErrorException(
@@ -62,22 +62,23 @@ class ReservationsEndpoint:
                 "success": False,
                 "message": f"booking {booking_id} not found",
             }
-        tech = await self._resolver.service_url_for_club(
-            target["club_id"], access_token=access_token
+        url = await self._router.booking_url(
+            target["club_id"],
+            f"/api/v1/Bookings/my/{booking_id}/cancel",
+            access_token=access_token,
         )
-        url = f"{tech}/api/v1/Bookings/my/{booking_id}/cancel"
         await self._client.post(url, access_token=access_token, json={})
         return {"success": True, "message": "reservation cancelled"}
 
     async def _profile(self, *, access_token: str) -> dict[str, Any]:
-        url = f"{self._client.main_base}/api/v1/Players/me"
+        url = self._router.catalog_url("/api/v1/Players/me")
         return await self._client.get(url, access_token=access_token)
 
     async def _player_in_club(
         self, *, club_id: str, auth0_sub: str, access_token: str
     ) -> dict[str, Any]:
         encoded = encode_auth0_sub(auth0_sub)
-        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}/players/{encoded}"
+        url = self._router.catalog_url(f"/api/v1/Clubs/{club_id}/players/{encoded}")
         return await self._client.get(url, access_token=access_token)
 
     async def _calculate_price(
@@ -90,8 +91,8 @@ class ReservationsEndpoint:
         day_iso: str,
         access_token: str,
     ) -> dict[str, Any]:
-        url = (
-            f"{self._client.main_base}/api/v1/Clubs/{club_id}/actions/calculate-price"
+        url = self._router.catalog_url(
+            f"/api/v1/Clubs/{club_id}/actions/calculate-price"
         )
         body = {
             "clubId": club_id,
@@ -183,7 +184,7 @@ class ReservationsEndpoint:
             access_token=access_token,
         )
 
-        clubs_ep = ClubsEndpoint(self._client)
+        clubs_ep = ClubsEndpoint(self._client, self._router)
         club_dict = await clubs_ep.get_club_by_id(club_id, access_token=access_token)
         club_name = club_dict["name"] if club_dict else ""
         booker_name = f"{profile['firstName']} {profile['lastName']}"
@@ -206,10 +207,9 @@ class ReservationsEndpoint:
             "trainerProfileName": "undefined undefined",
         }
 
-        tech = await self._resolver.service_url_for_club(
-            club_id, access_token=access_token
+        url = await self._router.booking_url(
+            club_id, f"/api/v1/Clubs/{club_id}/bookings", access_token=access_token
         )
-        url = f"{tech}/api/v1/Clubs/{club_id}/bookings"
         created = await self._client.post(url, access_token=access_token, json=body)
         if not created:
             raise ApiErrorException("BOOKING_FAILED", "server returned empty response")
@@ -257,7 +257,7 @@ class ReservationsEndpoint:
                     access_token=access_token,
                 )
             )
-        clubs_ep = ClubsEndpoint(self._client)
+        clubs_ep = ClubsEndpoint(self._client, self._router)
         club_dict = await clubs_ep.get_club_by_id(club_id, access_token=access_token)
         booker_name = f"{profile['firstName']} {profile['lastName']}"
         body = {
@@ -277,15 +277,11 @@ class ReservationsEndpoint:
             "source": 0,
             "trainerProfileName": "undefined undefined",
         }
-        tech = await self._resolver.service_url_for_club(
-            club_id, access_token=access_token
+        url = await self._router.booking_url(
+            club_id, f"/api/v1/Clubs/{club_id}/bookings", access_token=access_token
         )
         created = (
-            await self._client.post(
-                f"{tech}/api/v1/Clubs/{club_id}/bookings",
-                access_token=access_token,
-                json=body,
-            )
+            await self._client.post(url, access_token=access_token, json=body)
             or []
         )
         return {
@@ -316,14 +312,12 @@ class ReservationsEndpoint:
         errors: list[dict[str, str]] = []
         for b in bookings:
             try:
-                tech = await self._resolver.service_url_for_club(
-                    b["club_id"], access_token=access_token
-                )
-                await self._client.post(
-                    f"{tech}/api/v1/Bookings/my/{b['id']}/cancel",
+                url = await self._router.booking_url(
+                    b["club_id"],
+                    f"/api/v1/Bookings/my/{b['id']}/cancel",
                     access_token=access_token,
-                    json={},
                 )
+                await self._client.post(url, access_token=access_token, json={})
                 deleted.append(b["id"])
             except Exception as exc:
                 errors.append({"booking_id": b["id"], "error": str(exc)})

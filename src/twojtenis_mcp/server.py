@@ -13,6 +13,7 @@ from .endpoints.reservations import ReservationsEndpoint
 from .endpoints.schedules import SchedulesEndpoint
 from .locations import LocationsService
 from .models import ApiErrorException
+from .router import ApiRouter
 from .tech_group import TechGroupResolver
 from .utils import to_iso_date
 
@@ -20,10 +21,11 @@ mcp = FastMCP("twojtenis-mcp")
 
 _client = ApiClient(main_base=config.main_api_url, timeout=config.request_timeout)
 _resolver = TechGroupResolver(_client)
-_clubs = ClubsEndpoint(_client)
-_locations = LocationsService(_client)
-_schedules = SchedulesEndpoint(_client, _resolver, _locations)
-_reservations = ReservationsEndpoint(_client, _resolver)
+_router = ApiRouter(catalog_base=config.main_api_url, resolver=_resolver)
+_clubs = ClubsEndpoint(_client, _router)
+_locations = LocationsService(_client, _router)
+_schedules = SchedulesEndpoint(_client, _router, _locations)
+_reservations = ReservationsEndpoint(_client, _router)
 
 
 def _err(exc: ApiErrorException) -> dict[str, Any]:
