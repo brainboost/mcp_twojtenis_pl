@@ -39,8 +39,8 @@ The server is stateless. Each MCP tool call is fully authenticated by an Auth0 `
 
 ### Two API hosts
 
-- **Main API** (`https://app-twojtenis-api-p-weu.azurewebsites.net`): clubs, regions, players, prices.
-- **Regional / technical-group API** (e.g. `https://app-twojtenis-tech-krakow-api-p-weu.azurewebsites.net`): bookings, schedule, excludes. Each club declares its own tech-group host via `GET /api/v1/Clubs/{id}/technical-group`. `TechGroupResolver` caches that lookup per process.
+- **Catalog API** (`https://app-twojtenis-api-p-weu.azurewebsites.net`): clubs, regions, players, prices. Configured via `TWOJTENIS_CATALOG_API_URL` (or deprecated `TWOJTENIS_MAIN_API_URL`).
+- **Booking API** (e.g. `https://app-twojtenis-tech-krakow-api-p-weu.azurewebsites.net`): bookings, schedule, excludes. Per-club URL discovered dynamically via `GET /api/v1/Clubs/{id}/technical-group`. `TechGroupResolver` caches per-club with 1h TTL and retry. `ApiRouter` provides env-var override support.
 
 ### Layer Structure
 
@@ -52,6 +52,7 @@ server.py           # FastMCP server with @mcp.tool() decorators (MCP layer)
 │   ├── schedules.py    # /bookings/public + /excludes/public
 │   └── oauth.py        # Auth0 login + refresh
 ├── client.py        # ApiClient: thin async httpx wrapper, Bearer auth
+├── router.py        # ApiRouter: semantic URL routing (catalog_url / booking_url)
 ├── tech_group.py    # Per-club regional service URL resolver (cached)
 ├── locations.py     # Court UUID + name resolver
 ├── models.py        # Pydantic v2 models for new API
@@ -66,10 +67,24 @@ server.py           # FastMCP server with @mcp.tool() decorators (MCP layer)
 
 1. **Authentication**: `login_oauth(email, password)` returns `{access_token, refresh_token, expires_at, ...}`. Every booking tool takes that `access_token` and sends `Authorization: Bearer <token>`.
 2. **Error Handling**: `ApiErrorException(code, message, details)`. Tool wrappers convert it to `{success: False, code, message, details}`.
-3. **Configuration**: env vars only — `TWOJTENIS_MAIN_API_URL`, `TWOJTENIS_REQUEST_TIMEOUT`, all `AUTH0_*`.
+3. **Configuration**: env vars only — `TWOJTENIS_CATALOG_API_URL`, `TWOJTENIS_REQUEST_TIMEOUT`, all `AUTH0_*`. See URL override vars below.
 4. **Date Format**: ISO `YYYY-MM-DD` is canonical. Tools accept either ISO or legacy `DD.MM.YYYY`; `utils.to_iso_date` normalizes.
 5. **Time Format**: `HH:MM` from callers; the API expects `HH:MM:SS` and the endpoint layer normalizes.
 6. **Identifiers**: clubs and courts (locations) are UUIDs. Booker IDs are looked up per-club via `/Clubs/{id}/players/{auth0|sub}`.
+
+### URL Override Environment Variables
+
+`ApiRouter` supports env-var overrides for both API hosts:
+
+| Variable | Scope | Purpose |
+|----------|-------|---------|
+| `TWOJTENIS_CATALOG_API_URL` | Required | Catalog API base URL |
+| `TWOJTENIS_MAIN_API_URL` | Deprecated | Old name for catalog URL; accepted with warning |
+| `TWOJTENIS_BOOKING_API_URL` | Optional | Override booking API URL for all clubs |
+| `TWOJTENIS_BOOKING_API_URL_<UUID>` | Optional | Override booking API URL for one club (UUID with dashes→underscores, uppercase) |
+| `TWOJTENIS_TECH_GROUP_CACHE_TTL` | Optional | Tech-group URL cache TTL in seconds (default: 3600) |
+
+If booking API URL returns 404, `ApiRouter` auto-invalidates the cache and retries resolution once. On repeated failure, raises `BOOKING_URL_MISMATCH` with the override hint.
 
 ## MCP Tool Signatures (v0.2.0)
 

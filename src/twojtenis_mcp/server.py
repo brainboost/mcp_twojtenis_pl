@@ -19,9 +19,9 @@ from .utils import to_iso_date
 
 mcp = FastMCP("twojtenis-mcp")
 
-_client = ApiClient(main_base=config.main_api_url, timeout=config.request_timeout)
+_client = ApiClient(main_base=config.catalog_api_url, timeout=config.request_timeout)
 _resolver = TechGroupResolver(_client)
-_router = ApiRouter(catalog_base=config.main_api_url, resolver=_resolver)
+_router = ApiRouter(catalog_base=config.catalog_api_url, resolver=_resolver)
 _clubs = ClubsEndpoint(_client, _router)
 _locations = LocationsService(_client, _router)
 _schedules = SchedulesEndpoint(_client, _router, _locations)

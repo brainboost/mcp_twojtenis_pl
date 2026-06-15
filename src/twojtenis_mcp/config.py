@@ -21,10 +21,6 @@ class Config:
         raise KeyError("TWOJTENIS_CATALOG_API_URL environment variable is required")
 
     @property
-    def main_api_url(self) -> str:
-        return os.environ["TWOJTENIS_MAIN_API_URL"]
-
-    @property
     def request_timeout(self) -> int:
         return int(os.getenv("TWOJTENIS_REQUEST_TIMEOUT", "30"))
 
