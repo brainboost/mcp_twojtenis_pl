@@ -45,20 +45,21 @@ class ApiRouter:
         params=None,
     ) -> Any:
         """GET from the booking API. On 404, invalidates tech-group cache and retries once."""
+        club_key = club_id.replace("-", "_").upper()
         url = await self.booking_url(club_id, path, access_token=access_token or "")
         try:
             return await client.get(url, access_token=access_token, params=params)
         except ApiErrorException as exc:
             if exc.code == "HTTP_ERROR" and (exc.details or {}).get("status") == 404:
-                club_key = club_id.replace("-", "_").upper()
                 self._resolver.invalidate(club_id)
                 url2 = await self.booking_url(club_id, path, access_token=access_token or "")
                 if url2 == url:
-                    raise ApiErrorException(
-                        "BOOKING_URL_MISMATCH",
-                        f"404 from {url!r}. Tech-group URL may be stale or wrong. "
-                        f"Override with TWOJTENIS_BOOKING_API_URL_{club_key}=<correct_url>",
-                        exc.details,
-                    ) from exc
+                    override_key = f"TWOJTENIS_BOOKING_API_URL_{club_key}"
+                    override_active = override_key in os.environ or "TWOJTENIS_BOOKING_API_URL" in os.environ
+                    if override_active:
+                        msg = f"404 from {url!r}. Booking URL was set via env-var override. Check {override_key} or TWOJTENIS_BOOKING_API_URL."
+                    else:
+                        msg = f"404 from {url!r}. Tech-group URL may be stale. Override with {override_key}=<correct_url>"
+                    raise ApiErrorException("BOOKING_URL_MISMATCH", msg, exc.details) from exc
                 return await client.get(url2, access_token=access_token, params=params)
             raise
