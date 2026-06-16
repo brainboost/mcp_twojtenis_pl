@@ -38,8 +38,8 @@ def _err(exc: ApiErrorException) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def get_all_clubs(access_token: str) -> Any:
-    """List all clubs available on TwojTenis."""
+async def get_all_clubs(access_token: str = "") -> Any:
+    """List all clubs available on TwojTenis. No authentication required."""
     try:
         return await _clubs.list_clubs(access_token=access_token)
     except ApiErrorException as exc:
@@ -48,9 +48,9 @@ async def get_all_clubs(access_token: str) -> Any:
 
 @mcp.tool()
 async def get_club_locations(
-    access_token: str, club_id: str, sport: str = ""
+    club_id: str, sport: str = "", access_token: str = ""
 ) -> Any:
-    """List the bookable courts (locations) at one club.
+    """List the bookable courts (locations) at one club. No authentication required.
 
     Each entry has `id` (use as `location_id` in put_reservation), `name`
     (use as `location_name`), `sport` (derived: "tennis", "badminton",
@@ -71,9 +71,9 @@ async def get_club_locations(
 
 @mcp.tool()
 async def get_club_schedule(
-    access_token: str, club_id: str, date: str
+    club_id: str, date: str, access_token: str = ""
 ) -> dict[str, Any]:
-    """Public schedule (occupied slots + excludes) for one club on one day."""
+    """Public schedule (occupied slots + excludes) for one club on one day. No authentication required."""
     try:
         return await _schedules.get_club_schedule(
             club_id=club_id, date=date, access_token=access_token
