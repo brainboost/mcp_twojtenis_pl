@@ -2,6 +2,8 @@ import pytest
 
 from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.endpoints.clubs import ClubsEndpoint
+from twojtenis_mcp.router import ApiRouter
+from twojtenis_mcp.tech_group import TechGroupResolver
 
 
 def _open_hours_all_day():
@@ -66,7 +68,9 @@ async def test_list_clubs_returns_dicts(monkeypatch):
         return sample
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    ep = ClubsEndpoint(ApiClient(main_base="https://main"))
+    client = ApiClient(main_base="https://main")
+    router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
+    ep = ClubsEndpoint(client, router)
     clubs = await ep.list_clubs(access_token="tok")
     assert clubs[0]["id"] == "u1"
     assert clubs[0]["name"] == "Test"
@@ -105,7 +109,9 @@ async def test_get_club_by_id(monkeypatch):
         raise AssertionError(url)
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    ep = ClubsEndpoint(ApiClient(main_base="https://main"))
+    client = ApiClient(main_base="https://main")
+    router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
+    ep = ClubsEndpoint(client, router)
     club = await ep.get_club_by_id("u1", access_token="t")
     assert club is not None
     assert club["id"] == "u1"
@@ -119,7 +125,9 @@ async def test_get_club_details_passthrough(monkeypatch):
         return {"owner": {}, "priceLists": [], "exceptions": []}
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    ep = ClubsEndpoint(ApiClient(main_base="https://main"))
+    client = ApiClient(main_base="https://main")
+    router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
+    ep = ClubsEndpoint(client, router)
     out = await ep.get_club_details("abc", access_token="t")
     assert out == {"owner": {}, "priceLists": [], "exceptions": []}
 
@@ -131,6 +139,8 @@ async def test_get_club_settings_passthrough(monkeypatch):
         return {"maxDaysInAdvance": 7, "maxHoursForCancel": 24}
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    ep = ClubsEndpoint(ApiClient(main_base="https://main"))
+    client = ApiClient(main_base="https://main")
+    router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
+    ep = ClubsEndpoint(client, router)
     out = await ep.get_club_settings("abc", access_token="t")
     assert out["maxDaysInAdvance"] == 7

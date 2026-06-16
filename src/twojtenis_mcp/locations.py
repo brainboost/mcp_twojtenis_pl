@@ -5,6 +5,7 @@ from typing import Any
 
 from .client import ApiClient
 from .models import Location
+from .router import ApiRouter
 
 
 class LocationsService:
@@ -16,8 +17,9 @@ class LocationsService:
     callers that have only a UUID in hand.
     """
 
-    def __init__(self, client: ApiClient) -> None:
+    def __init__(self, client: ApiClient, router: ApiRouter) -> None:
         self._client = client
+        self._router = router
         self._names: dict[str, str] = {}
         self._details_cache: dict[str, dict[str, Any]] = {}
 
@@ -28,7 +30,7 @@ class LocationsService:
         cached = self._details_cache.get(club_id)
         if cached is not None:
             return cached
-        url = f"{self._client.main_base}/api/v1/Clubs/{club_id}"
+        url = self._router.catalog_url(f"/api/v1/Clubs/{club_id}")
         details = await self._client.get(url, access_token=access_token) or {}
         self._details_cache[club_id] = details
         return details

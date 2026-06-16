@@ -2,6 +2,7 @@ import pytest
 
 from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.endpoints.reservations import ReservationsEndpoint
+from twojtenis_mcp.router import ApiRouter
 from twojtenis_mcp.tech_group import TechGroupResolver
 
 SAMPLE_BOOKING = {
@@ -49,7 +50,9 @@ async def test_get_reservations(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.get_reservations(
         access_token="t", from_iso="2026-05-01", to_iso="2026-05-31"
     )
@@ -78,7 +81,9 @@ async def test_delete_reservation(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     monkeypatch.setattr(ApiClient, "post", fake_post)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.delete_reservation(booking_id="b1", access_token="t")
     assert out["success"] is True
     assert seen[0][0].endswith("/api/v1/Bookings/my/b1/cancel")
@@ -96,7 +101,9 @@ async def test_get_reservation_details_returns_match(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     found = await ep.get_reservation_details(booking_id="b1", access_token="t")
     assert found is not None
     assert found["id"] == "b1"
@@ -115,7 +122,9 @@ async def test_delete_reservation_when_missing(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.delete_reservation(booking_id="ghost", access_token="t")
     assert out["success"] is False
 
@@ -143,7 +152,9 @@ async def test_delete_all(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     monkeypatch.setattr(ApiClient, "post", fake_post)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.delete_all_reservations(access_token="t")
     assert out["success"] is True
     assert out["deleted_count"] == 2
@@ -271,7 +282,9 @@ async def test_make_reservation(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     monkeypatch.setattr(ApiClient, "post", fake_post)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.make_reservation(
         club_id="c",
         location_id="loc",
@@ -323,7 +336,9 @@ async def test_make_bulk_reservation_sends_one_post_with_two_items(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     monkeypatch.setattr(ApiClient, "post", fake_post)
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     out = await ep.make_bulk_reservation(
         club_id="c",
         court_bookings=[
@@ -357,7 +372,9 @@ async def test_make_bulk_reservation_rejects_empty():
     from twojtenis_mcp.models import ApiErrorException
 
     client = ApiClient(main_base="https://main")
-    ep = ReservationsEndpoint(client, TechGroupResolver(client))
+    resolver = TechGroupResolver(client)
+    router = ApiRouter(catalog_base="https://main", resolver=resolver)
+    ep = ReservationsEndpoint(client, router)
     with pytest.raises(ApiErrorException) as ei:
         await ep.make_bulk_reservation(
             club_id="c", court_bookings=[], access_token="t"

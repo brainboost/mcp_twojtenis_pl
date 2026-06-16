@@ -2,6 +2,8 @@ import pytest
 
 from twojtenis_mcp.client import ApiClient
 from twojtenis_mcp.locations import LocationsService
+from twojtenis_mcp.router import ApiRouter
+from twojtenis_mcp.tech_group import TechGroupResolver
 
 
 CLUB_DETAILS_WITH_LOCATIONS = {
@@ -55,7 +57,8 @@ async def test_locations_for_club_returns_sorted(monkeypatch):
         return CLUB_DETAILS_WITH_LOCATIONS
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    svc = LocationsService(ApiClient(main_base="https://main"))
+    _client = ApiClient(main_base="https://main")
+    svc = LocationsService(_client, ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(_client)))
     locs = await svc.locations_for_club("c", access_token="t")
     assert [loc.id for loc in locs] == ["loc-1", "loc-2", "loc-3"]
     assert locs[0].name == "Kort nr 4"
@@ -70,7 +73,8 @@ async def test_locations_filters_by_sport(monkeypatch):
         return CLUB_DETAILS_WITH_LOCATIONS
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    svc = LocationsService(ApiClient(main_base="https://main"))
+    _client = ApiClient(main_base="https://main")
+    svc = LocationsService(_client, ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(_client)))
     badminton = await svc.locations_for_club(
         "c", access_token="t", sport="badminton"
     )
@@ -117,7 +121,8 @@ async def test_locations_for_club_caches_names(monkeypatch):
         return CLUB_DETAILS_WITH_LOCATIONS
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    svc = LocationsService(ApiClient(main_base="https://main"))
+    _client = ApiClient(main_base="https://main")
+    svc = LocationsService(_client, ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(_client)))
     await svc.locations_for_club("c", access_token="t")
     assert svc.name_for("loc-2") == "Badminton 2"
     assert svc.name_for("unknown") == "unknown"
@@ -129,13 +134,15 @@ async def test_location_ids_for_club(monkeypatch):
         return CLUB_DETAILS_WITH_LOCATIONS
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
-    svc = LocationsService(ApiClient(main_base="https://main"))
+    _client = ApiClient(main_base="https://main")
+    svc = LocationsService(_client, ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(_client)))
     ids = await svc.location_ids_for_club("c", access_token="t")
     assert sorted(ids) == ["loc-1", "loc-2", "loc-3"]
 
 
 def test_name_lookup_from_known_bookings():
-    svc = LocationsService(ApiClient(main_base=""))
+    _client = ApiClient(main_base="")
+    svc = LocationsService(_client, ApiRouter(catalog_base="", resolver=TechGroupResolver(_client)))
     svc.remember_names_from_bookings(
         [
             {"locationId": "a", "locationName": "Badminton 1"},
@@ -147,6 +154,7 @@ def test_name_lookup_from_known_bookings():
 
 
 def test_remember_accepts_snake_case():
-    svc = LocationsService(ApiClient(main_base=""))
+    _client = ApiClient(main_base="")
+    svc = LocationsService(_client, ApiRouter(catalog_base="", resolver=TechGroupResolver(_client)))
     svc.remember_names_from_bookings([{"location_id": "z", "location_name": "Court Z"}])
     assert svc.name_for("z") == "Court Z"
