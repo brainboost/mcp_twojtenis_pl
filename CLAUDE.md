@@ -39,8 +39,8 @@ The server is stateless. Each MCP tool call is fully authenticated by an Auth0 `
 
 ### Two API hosts
 
-- **Main API** (`https://app-twojtenis-api-p-weu.azurewebsites.net`): clubs, regions, players, prices.
-- **Regional / technical-group API** (e.g. `https://app-twojtenis-tech-krakow-api-p-weu.azurewebsites.net`): bookings, schedule, excludes. Each club declares its own tech-group host via `GET /api/v1/Clubs/{id}/technical-group`. `TechGroupResolver` caches that lookup per process.
+- **Catalog API** (`https://app-twojtenis-api-p-weu.azurewebsites.net`): clubs, regions, players, prices. Configured via `TWOJTENIS_CATALOG_API_URL` (or deprecated `TWOJTENIS_MAIN_API_URL`).
+- **Booking API** (e.g. `https://app-twojtenis-tech-krakow-api-p-weu.azurewebsites.net`): bookings, schedule, excludes. Per-club URL discovered dynamically via `GET /api/v1/Clubs/{id}/technical-group`. `TechGroupResolver` caches per-club with 1h TTL and retry. `ApiRouter` provides env-var override support.
 
 ### Layer Structure
 
@@ -52,6 +52,7 @@ server.py           # FastMCP server with @mcp.tool() decorators (MCP layer)
 │   ├── schedules.py    # /bookings/public + /excludes/public
 │   └── oauth.py        # Auth0 login + refresh
 ├── client.py        # ApiClient: thin async httpx wrapper, Bearer auth
+├── router.py        # ApiRouter: semantic URL routing (catalog_url / booking_url)
 ├── tech_group.py    # Per-club regional service URL resolver (cached)
 ├── locations.py     # Court UUID + name resolver
 ├── models.py        # Pydantic v2 models for new API
@@ -64,12 +65,26 @@ server.py           # FastMCP server with @mcp.tool() decorators (MCP layer)
 
 ### Key Design Patterns
 
-1. **Authentication**: `login_oauth(email, password)` returns `{access_token, refresh_token, expires_at, ...}`. Every booking tool takes that `access_token` and sends `Authorization: Bearer <token>`.
+1. **Authentication**: `login_oauth(email, password)` returns `{access_token, refresh_token, expires_at, ...}`. Booking/reservation tools require that `access_token`. Read-only public tools (`get_all_clubs`, `get_club_locations`, `get_club_schedule`) work without auth — `access_token` defaults to `""`.
 2. **Error Handling**: `ApiErrorException(code, message, details)`. Tool wrappers convert it to `{success: False, code, message, details}`.
-3. **Configuration**: env vars only — `TWOJTENIS_MAIN_API_URL`, `TWOJTENIS_REQUEST_TIMEOUT`, all `AUTH0_*`.
+3. **Configuration**: env vars only — `TWOJTENIS_CATALOG_API_URL`, `TWOJTENIS_REQUEST_TIMEOUT`, all `AUTH0_*`. See URL override vars below.
 4. **Date Format**: ISO `YYYY-MM-DD` is canonical. Tools accept either ISO or legacy `DD.MM.YYYY`; `utils.to_iso_date` normalizes.
 5. **Time Format**: `HH:MM` from callers; the API expects `HH:MM:SS` and the endpoint layer normalizes.
 6. **Identifiers**: clubs and courts (locations) are UUIDs. Booker IDs are looked up per-club via `/Clubs/{id}/players/{auth0|sub}`.
+
+### URL Override Environment Variables
+
+`ApiRouter` supports env-var overrides for both API hosts:
+
+| Variable | Scope | Purpose |
+|----------|-------|---------|
+| `TWOJTENIS_CATALOG_API_URL` | Required | Catalog API base URL |
+| `TWOJTENIS_MAIN_API_URL` | Deprecated | Old name for catalog URL; accepted with warning |
+| `TWOJTENIS_BOOKING_API_URL` | Optional | Override booking API URL for all clubs |
+| `TWOJTENIS_BOOKING_API_URL_<UUID>` | Optional | Override booking API URL for one club (UUID with dashes→underscores, uppercase) |
+| `TWOJTENIS_TECH_GROUP_CACHE_TTL` | Optional | Tech-group URL cache TTL in seconds (default: 3600) |
+
+If booking API URL returns 404, `ApiRouter` auto-invalidates the cache and retries resolution once. On repeated failure, raises `BOOKING_URL_MISMATCH` with the override hint.
 
 ## MCP Tool Signatures (v0.2.0)
 
@@ -78,11 +93,13 @@ Authentication (Auth0):
 - `login_oauth(email, password)` → `{success, access_token, refresh_token, expires_at, token_type, scope, id_token}`
 - `refresh_oauth_token(refresh_token)` → same shape as `login_oauth`
 
-Booking tools (all take an Auth0 `access_token` from `login_oauth`):
+Public tools (no `access_token` required — all catalog/schedule data is unauthenticated):
 
-- `get_all_clubs(access_token)` — list clubs (UUID id, name, address, openHours, prices, ...)
-- `get_club_locations(access_token, club_id, sport="")` — list courts at one club; returns `id` (UUID, used as `location_id`), `name` (used as `location_name`), `sport` (derived: `"tennis"`, `"badminton"`, `"padel"`, `"squash"`, `"table_tennis"`, `"fitness"`, `"bowling"`, `"football"`, `"multi"`, or `null`), plus `short_name`, `tags`, `sort_number`, `type`, `has_light`, `is_enabled`, `group_name`. Source: the `locations` field of `GET /api/v1/Clubs/{id}`. Pass `sport` to filter (case-insensitive). Sport mapping lives in `models.SPORT_BY_TYPE`/`SPORT_BY_TAG` — extend if new `type` values appear.
-- `get_club_schedule(access_token, club_id, date)` — per-court availability grid for one day. Returns `{success, data: {club_id, date, availability: [{location_id, location_name, sport, slots: [{start, end, available}]}]}}`. Slots are 30-minute, generated from the club's `openHours[weekday]`, marked unavailable when any booking or exclude overlaps. Disabled courts are dropped. Closed days return `availability: []`.
+- `get_all_clubs(access_token="")` — list clubs (UUID id, name, address, openHours, prices, ...)
+- `get_club_locations(club_id, sport="", access_token="")` — list courts at one club; returns `id` (UUID, used as `location_id`), `name` (used as `location_name`), `sport` (derived: `"tennis"`, `"badminton"`, `"padel"`, `"squash"`, `"table_tennis"`, `"fitness"`, `"bowling"`, `"football"`, `"multi"`, or `null`), plus `short_name`, `tags`, `sort_number`, `type`, `has_light`, `is_enabled`, `group_name`. Source: the `locations` field of `GET /api/v1/Clubs/{id}`. Pass `sport` to filter (case-insensitive). Sport mapping lives in `models.SPORT_BY_TYPE`/`SPORT_BY_TAG` — extend if new `type` values appear.
+- `get_club_schedule(club_id, date, access_token="")` — per-court availability grid for one day. Returns `{success, data: {club_id, date, availability: [{location_id, location_name, sport, slots: [{start, end, available}]}]}}`. Slots are 30-minute, generated from the club's `openHours[weekday]`, marked unavailable when any booking or exclude overlaps. Disabled courts are dropped. Closed days return `availability: []`.
+
+Booking tools (require Auth0 `access_token` from `login_oauth`):
 - `get_reservations(access_token, from_date="", to_date="")` — defaults to `today .. today+90d`
 - `get_reservation_details(access_token, booking_id)`
 - `put_reservation(access_token, club_id, location_id, location_name, date, start_time, end_time)`

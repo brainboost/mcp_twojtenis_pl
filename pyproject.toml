@@ -1,6 +1,6 @@
 [project]
 name = "twojtenis-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "MCP server for booking badminton and tennis courts via app.twojtenis.pl (Auth0 JWT API)"
 authors = [{ name = "Sergei Vedishchev", email = "brainboost@gmail.com" }]
 readme = "README.md"

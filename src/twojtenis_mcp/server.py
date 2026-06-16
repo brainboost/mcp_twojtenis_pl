@@ -13,17 +13,19 @@ from .endpoints.reservations import ReservationsEndpoint
 from .endpoints.schedules import SchedulesEndpoint
 from .locations import LocationsService
 from .models import ApiErrorException
+from .router import ApiRouter
 from .tech_group import TechGroupResolver
 from .utils import to_iso_date
 
 mcp = FastMCP("twojtenis-mcp")
 
-_client = ApiClient(main_base=config.main_api_url, timeout=config.request_timeout)
+_client = ApiClient(main_base=config.catalog_api_url, timeout=config.request_timeout)
 _resolver = TechGroupResolver(_client)
-_clubs = ClubsEndpoint(_client)
-_locations = LocationsService(_client)
-_schedules = SchedulesEndpoint(_client, _resolver, _locations)
-_reservations = ReservationsEndpoint(_client, _resolver)
+_router = ApiRouter(catalog_base=config.catalog_api_url, resolver=_resolver)
+_clubs = ClubsEndpoint(_client, _router)
+_locations = LocationsService(_client, _router)
+_schedules = SchedulesEndpoint(_client, _router, _locations)
+_reservations = ReservationsEndpoint(_client, _router)
 
 
 def _err(exc: ApiErrorException) -> dict[str, Any]:
@@ -36,8 +38,8 @@ def _err(exc: ApiErrorException) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def get_all_clubs(access_token: str) -> Any:
-    """List all clubs available on TwojTenis."""
+async def get_all_clubs(access_token: str = "") -> Any:
+    """List all clubs available on TwojTenis. No authentication required."""
     try:
         return await _clubs.list_clubs(access_token=access_token)
     except ApiErrorException as exc:
@@ -46,9 +48,9 @@ async def get_all_clubs(access_token: str) -> Any:
 
 @mcp.tool()
 async def get_club_locations(
-    access_token: str, club_id: str, sport: str = ""
+    club_id: str, sport: str = "", access_token: str = ""
 ) -> Any:
-    """List the bookable courts (locations) at one club.
+    """List the bookable courts (locations) at one club. No authentication required.
 
     Each entry has `id` (use as `location_id` in put_reservation), `name`
     (use as `location_name`), `sport` (derived: "tennis", "badminton",
@@ -69,9 +71,9 @@ async def get_club_locations(
 
 @mcp.tool()
 async def get_club_schedule(
-    access_token: str, club_id: str, date: str
+    club_id: str, date: str, access_token: str = ""
 ) -> dict[str, Any]:
-    """Public schedule (occupied slots + excludes) for one club on one day."""
+    """Public schedule (occupied slots + excludes) for one club on one day. No authentication required."""
     try:
         return await _schedules.get_club_schedule(
             club_id=club_id, date=date, access_token=access_token

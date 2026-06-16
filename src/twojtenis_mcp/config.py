@@ -1,14 +1,24 @@
 from __future__ import annotations
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
     """Configuration with environment variable overrides."""
 
     @property
-    def main_api_url(self) -> str:
-        return os.environ["TWOJTENIS_MAIN_API_URL"]
+    def catalog_api_url(self) -> str:
+        if val := os.environ.get("TWOJTENIS_CATALOG_API_URL"):
+            return val
+        if val := os.environ.get("TWOJTENIS_MAIN_API_URL"):
+            logger.warning(
+                "TWOJTENIS_MAIN_API_URL is deprecated; set TWOJTENIS_CATALOG_API_URL instead"
+            )
+            return val
+        raise KeyError("TWOJTENIS_CATALOG_API_URL environment variable is required")
 
     @property
     def request_timeout(self) -> int:
