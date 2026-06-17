@@ -1,6 +1,7 @@
 """Playwright-driven Auth0 Universal Login. Lazy-imported by oauth_client.py
 so users don't pay the dependency cost unless login() is actually called."""
 
+import os
 import sys
 import tempfile
 import urllib.parse
@@ -98,12 +99,31 @@ async def perform_browser_login(
             page.on("request", _on_request)
 
             await page.goto(authorize_url, timeout=timeout_s * 1000)
+            # Auth0 redirects /authorize → /u/login; wait for the SPA to
+            # finish loading all resources before probing the DOM.
+            try:
+                await page.wait_for_load_state("networkidle", timeout=15_000)
+            except Exception:
+                pass  # best-effort; continue and let wait_for handle it
 
             # Wait for the username field, then fill it
             email_locator = page.locator(
                 'input[name="username"], input[name="email"], input[type="email"]'
             ).first  # .first is a property, not a method
-            await email_locator.wait_for(state="visible", timeout=30_000)
+            try:
+                await email_locator.wait_for(state="visible", timeout=30_000)
+            except Exception:
+                fd, debug_png = tempfile.mkstemp(suffix="-auth0-input.png")
+                os.close(fd)
+                try:
+                    await page.screenshot(path=debug_png)
+                except Exception:
+                    debug_png = "(screenshot failed)"
+                raise OAuthBrowserError(
+                    f"Auth0 login form not found within 30s (URL: {page.url}). "
+                    f"Screenshot: {debug_png}",
+                    kind="timeout",
+                )
             await email_locator.fill(email)
 
             # Wait for the password field (may appear after an initial email-only step)
@@ -159,15 +179,15 @@ async def perform_browser_login(
                 elapsed_ms += poll_ms
 
             if not captured_code:
-                # Capture screenshot for debugging
-                screenshot_path = tempfile.mkstemp(suffix=".png")
+                fd, debug_png = tempfile.mkstemp(suffix="-auth0-redirect.png")
+                os.close(fd)
                 try:
-                    await page.screenshot(path=screenshot_path[1])
+                    await page.screenshot(path=debug_png)
                 except Exception:
-                    screenshot_path = "(screenshot failed)"
+                    debug_png = "(screenshot failed)"
                 raise OAuthBrowserError(
                     f"Timed out waiting for Auth0 redirect after {timeout_s}s. "
-                    f"Screenshot: {screenshot_path}",
+                    f"Screenshot: {debug_png}",
                     kind="timeout",
                 )
 
