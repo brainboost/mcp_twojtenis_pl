@@ -112,11 +112,9 @@ body:
       label: Feature Category
       description: What area does this feature relate to?
       options:
-        - Bot commands
-        - Interactive mode (chat)
-        - File operations
-        - Audible interactions (speech)
-        - MCP server integration
+        - Web API interface
+        - Configuration
+        - MCP interface
         - Performance and speed
         - Documentation
         - Other

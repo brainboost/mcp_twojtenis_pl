@@ -178,9 +178,8 @@ def _open_hours_all_day():
 
 
 def _empty_contact():
-    return {
-        k: None
-        for k in (
+    return dict.fromkeys(
+        (
             "phoneNo",
             "email",
             "www",
@@ -189,7 +188,7 @@ def _empty_contact():
             "tikTokProfile",
             "twitterProfile",
         )
-    }
+    )
 
 
 PROFILE = {
@@ -272,7 +271,8 @@ async def test_make_reservation(monkeypatch):
         raise AssertionError(url)
 
     async def fake_post(self, url, *, access_token, json=None):
-        captured[url] = json
+        if json:
+            captured[url] = json
         if "calculate-price" in url:
             return PRICE
         if url.endswith("/api/v1/Clubs/c/bookings"):
@@ -323,7 +323,8 @@ async def test_make_bulk_reservation_sends_one_post_with_two_items(monkeypatch):
         raise AssertionError(url)
 
     async def fake_post(self, url, *, access_token, json=None):
-        captured[url] = json
+        if json:
+            captured[url] = json
         if "calculate-price" in url:
             return PRICE
         if url.endswith("/api/v1/Clubs/c/bookings"):
@@ -376,7 +377,5 @@ async def test_make_bulk_reservation_rejects_empty():
     router = ApiRouter(catalog_base="https://main", resolver=resolver)
     ep = ReservationsEndpoint(client, router)
     with pytest.raises(ApiErrorException) as ei:
-        await ep.make_bulk_reservation(
-            club_id="c", court_bookings=[], access_token="t"
-        )
+        await ep.make_bulk_reservation(club_id="c", court_bookings=[], access_token="t")
     assert ei.value.code == "VALIDATION_ERROR"

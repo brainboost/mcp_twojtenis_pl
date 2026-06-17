@@ -63,9 +63,7 @@ class ReservationsEndpoint:
                 "message": f"booking {booking_id} not found",
             }
         url = await self._router.booking_url(
-            target["club_id"],
-            f"/api/v1/Bookings/my/{booking_id}/cancel",
-            access_token=access_token,
+            target["club_id"], f"/api/v1/Bookings/my/{booking_id}/cancel"
         )
         await self._client.post(url, access_token=access_token, json={})
         return {"success": True, "message": "reservation cancelled"}
@@ -185,7 +183,7 @@ class ReservationsEndpoint:
         )
 
         clubs_ep = ClubsEndpoint(self._client, self._router)
-        club_dict = await clubs_ep.get_club_by_id(club_id, access_token=access_token)
+        club_dict = await clubs_ep.get_club_by_id(club_id)
         club_name = club_dict["name"] if club_dict else ""
         booker_name = f"{profile['firstName']} {profile['lastName']}"
 
@@ -208,7 +206,7 @@ class ReservationsEndpoint:
         }
 
         url = await self._router.booking_url(
-            club_id, f"/api/v1/Clubs/{club_id}/bookings", access_token=access_token
+            club_id, f"/api/v1/Clubs/{club_id}/bookings"
         )
         created = await self._client.post(url, access_token=access_token, json=body)
         if not created:
@@ -258,7 +256,7 @@ class ReservationsEndpoint:
                 )
             )
         clubs_ep = ClubsEndpoint(self._client, self._router)
-        club_dict = await clubs_ep.get_club_by_id(club_id, access_token=access_token)
+        club_dict = await clubs_ep.get_club_by_id(club_id)
         booker_name = f"{profile['firstName']} {profile['lastName']}"
         body = {
             "requests": items,
@@ -278,11 +276,10 @@ class ReservationsEndpoint:
             "trainerProfileName": "undefined undefined",
         }
         url = await self._router.booking_url(
-            club_id, f"/api/v1/Clubs/{club_id}/bookings", access_token=access_token
+            club_id, f"/api/v1/Clubs/{club_id}/bookings"
         )
         created = (
-            await self._client.post(url, access_token=access_token, json=body)
-            or []
+            await self._client.post(url, access_token=access_token, json=body) or []
         )
         return {
             "success": True,
@@ -313,9 +310,7 @@ class ReservationsEndpoint:
         for b in bookings:
             try:
                 url = await self._router.booking_url(
-                    b["club_id"],
-                    f"/api/v1/Bookings/my/{b['id']}/cancel",
-                    access_token=access_token,
+                    b["club_id"], f"/api/v1/Bookings/my/{b['id']}/cancel"
                 )
                 await self._client.post(url, access_token=access_token, json={})
                 deleted.append(b["id"])

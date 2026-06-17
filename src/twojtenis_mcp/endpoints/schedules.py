@@ -32,17 +32,13 @@ class SchedulesEndpoint:
         self._router = router
         self._locations = locations
 
-    async def get_club_schedule(
-        self, *, club_id: str, date: str, access_token: str
-    ) -> dict[str, Any]:
+    async def get_club_schedule(self, *, club_id: str, date: str) -> dict[str, Any]:
         try:
             iso = to_iso_date(date)
         except ValueError as exc:
             raise ApiErrorException("VALIDATION_ERROR", str(exc)) from exc
 
-        details = await self._locations.get_club_details(
-            club_id, access_token=access_token
-        )
+        details = await self._locations.get_club_details(club_id)
         locations = details.get("locations") or []
         open_hours = details.get("openHours") or {}
 
@@ -50,8 +46,6 @@ class SchedulesEndpoint:
             await self._router.booking_get(
                 club_id,
                 f"/api/v1/Clubs/{club_id}/bookings/public",
-                access_token=None,
-                resolve_token=access_token,
                 client=self._client,
                 params={"from": iso, "to": iso},
             )
@@ -61,8 +55,6 @@ class SchedulesEndpoint:
             await self._router.booking_get(
                 club_id,
                 f"/api/v1/clubs/{club_id}/excludes/public",
-                access_token=None,
-                resolve_token=access_token,
                 client=self._client,
                 params={"date": iso},
             )

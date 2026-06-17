@@ -22,9 +22,8 @@ def _open_hours_all_day():
 
 
 def _empty_contact():
-    return {
-        k: None
-        for k in (
+    return dict.fromkeys(
+        (
             "phoneNo",
             "email",
             "www",
@@ -33,7 +32,7 @@ def _empty_contact():
             "tikTokProfile",
             "twitterProfile",
         )
-    }
+    )
 
 
 @pytest.mark.asyncio
@@ -71,7 +70,7 @@ async def test_list_clubs_returns_dicts(monkeypatch):
     client = ApiClient(main_base="https://main")
     router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
     ep = ClubsEndpoint(client, router)
-    clubs = await ep.list_clubs(access_token="tok")
+    clubs = await ep.list_clubs()
     assert clubs[0]["id"] == "u1"
     assert clubs[0]["name"] == "Test"
 
@@ -112,10 +111,10 @@ async def test_get_club_by_id(monkeypatch):
     client = ApiClient(main_base="https://main")
     router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
     ep = ClubsEndpoint(client, router)
-    club = await ep.get_club_by_id("u1", access_token="t")
+    club = await ep.get_club_by_id("u1")
     assert club is not None
     assert club["id"] == "u1"
-    assert await ep.get_club_by_id("missing", access_token="t") is None
+    assert await ep.get_club_by_id("missing") is None
 
 
 @pytest.mark.asyncio
@@ -128,7 +127,7 @@ async def test_get_club_details_passthrough(monkeypatch):
     client = ApiClient(main_base="https://main")
     router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
     ep = ClubsEndpoint(client, router)
-    out = await ep.get_club_details("abc", access_token="t")
+    out = await ep.get_club_details("abc")
     assert out == {"owner": {}, "priceLists": [], "exceptions": []}
 
 
@@ -142,5 +141,5 @@ async def test_get_club_settings_passthrough(monkeypatch):
     client = ApiClient(main_base="https://main")
     router = ApiRouter(catalog_base="https://main", resolver=TechGroupResolver(client))
     ep = ClubsEndpoint(client, router)
-    out = await ep.get_club_settings("abc", access_token="t")
+    out = await ep.get_club_settings("abc")
     assert out["maxDaysInAdvance"] == 7

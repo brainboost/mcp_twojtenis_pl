@@ -90,7 +90,7 @@ def test_reservation_parses_my_bookings_payload():
     assert r.id == "b"
     assert r.location_name == "Badminton 2"
     assert r.start_time == "16:00:00"
-    assert r.payment.amount_to_pay == 70
+    assert r.payment.amount_to_pay == 70  # ty:ignore[unresolved-attribute]
 
 
 def test_api_error_exception_carries_code_message_details():

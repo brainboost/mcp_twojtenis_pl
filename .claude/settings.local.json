@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uv run pytest:*)"
+      "Bash(uv run pytest:*)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Projects\\\\mcp\\\\twojtenis_pl\" -Recurse -Filter \"*.py\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_network_requests",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__get_network_request",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script",
+      "Bash(wt switch *)",
+      "Bash(uv run *)",
+      "Bash(uv lock *)",
+      "Bash(uvx ruff *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'chore: drop legacy HTML scraping & static config; bump to 0.2.0 *)",
+      "Bash(git commit -m 'docs: update for v0.2.0 — Auth0 JWT-only, new tool signatures *)",
+      "Bash(browser-harness *)",
+      "WebFetch(domain:builtwith.com)",
+      "WebFetch(domain:web.archive.org)",
+      "WebFetch(domain:wonderwall-studio.pl)",
+      "WebSearch"
     ]
   }
 }

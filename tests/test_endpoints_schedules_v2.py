@@ -74,7 +74,7 @@ async def test_get_schedule_returns_availability_grid(monkeypatch):
     router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
     locations = LocationsService(client, router)
     ep = SchedulesEndpoint(client, router, locations)
-    out = await ep.get_club_schedule(club_id="c", date="11.05.2026", access_token="t")
+    out = await ep.get_club_schedule(club_id="c", date="11.05.2026")
     assert out["success"] is True
     assert out["data"]["date"] == "2026-05-11"
 
@@ -101,11 +101,9 @@ async def test_invalid_date_raises():
     client = ApiClient(main_base="https://main.example")
     resolver = TechGroupResolver(client)
     router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
-    ep = SchedulesEndpoint(
-        client, router, LocationsService(client, router)
-    )
+    ep = SchedulesEndpoint(client, router, LocationsService(client, router))
     with pytest.raises(ApiErrorException) as ei:
-        await ep.get_club_schedule(club_id="c", date="not-a-date", access_token="t")
+        await ep.get_club_schedule(club_id="c", date="not-a-date")
     assert ei.value.code == "VALIDATION_ERROR"
 
 
@@ -130,8 +128,8 @@ async def test_club_details_cached_across_calls(monkeypatch):
     router = ApiRouter(catalog_base="https://main.example", resolver=resolver)
     locations = LocationsService(client, router)
     ep = SchedulesEndpoint(client, router, locations)
-    await ep.get_club_schedule(club_id="c", date="2026-05-11", access_token="t")
-    await ep.get_club_schedule(club_id="c", date="2026-05-12", access_token="t")
+    await ep.get_club_schedule(club_id="c", date="2026-05-11")
+    await ep.get_club_schedule(club_id="c", date="2026-05-12")
     # Same LocationsService instance also serves get_club_locations
-    await locations.locations_for_club("c", access_token="t")
+    await locations.locations_for_club("c")
     assert detail_fetches == 1

@@ -15,8 +15,8 @@ async def test_resolves_and_caches(monkeypatch):
     monkeypatch.setattr(ApiClient, "get", fake_get)
     c = ApiClient(main_base="https://main.example")
     r = TechGroupResolver(c)
-    url1 = await r.service_url_for_club("club-uuid", access_token="t")
-    url2 = await r.service_url_for_club("club-uuid", access_token="t")
+    url1 = await r.service_url_for_club("club-uuid")
+    url2 = await r.service_url_for_club("club-uuid")
     assert url1 == url2 == "https://tech.example"
     assert len(calls) == 1
 
@@ -31,7 +31,7 @@ async def test_invalidate_clears_cache(monkeypatch):
 
     monkeypatch.setattr(ApiClient, "get", fake_get)
     r = TechGroupResolver(ApiClient(main_base="https://main.example"))
-    await r.service_url_for_club("c", access_token="t")
+    await r.service_url_for_club("c")
     r.invalidate("c")
-    await r.service_url_for_club("c", access_token="t")
+    await r.service_url_for_club("c")
     assert len(calls) == 2

@@ -134,7 +134,6 @@ Example call:
 {
   "tool": "get_club_schedule",
   "arguments": {
-    "access_token": "<jwt from login_oauth>",
     "club_id": "958662f0-0bd2-4fdc-8bef-bb2d69761adb",
     "date": "2026-05-11"
   }

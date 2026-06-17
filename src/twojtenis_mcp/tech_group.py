@@ -33,7 +33,7 @@ class TechGroupResolver:
         self._client = client
         self._cache: dict[str, _CacheEntry] = {}
 
-    async def service_url_for_club(self, club_id: str, *, access_token: str) -> str:
+    async def service_url_for_club(self, club_id: str) -> str:
         entry = self._cache.get(club_id)
         if entry is not None and time.monotonic() < entry.expires_at:
             return entry.url
@@ -44,7 +44,7 @@ class TechGroupResolver:
 
         for attempt in range(3):
             try:
-                raw = await self._client.get(url, access_token=access_token)
+                raw = await self._client.get(url, access_token=None)
                 tg = TechnicalGroup.model_validate(raw)
                 resolved = tg.service_url.rstrip("/")
                 self._cache[club_id] = _CacheEntry(
@@ -63,8 +63,12 @@ class TechGroupResolver:
                     )
                     await asyncio.sleep(delays[attempt])
 
-        logger.warning("tech-group resolution failed for club %s: %s", club_id, last_exc)
-        raise last_exc  # type: ignore[misc]
+        logger.warning(
+            "tech-group resolution failed for club %s: %s", club_id, last_exc
+        )
+        if last_exc:
+            raise last_exc
+        return self._client.main_base
 
     def invalidate(self, club_id: str | None = None) -> None:
         if club_id is None:
